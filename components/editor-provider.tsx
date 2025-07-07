@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { Editor } from '@tiptap/react';
 
 interface EditorContextType {
@@ -16,8 +16,14 @@ interface EditorProviderProps {
 export function EditorProvider({ children }: EditorProviderProps) {
   const [editor, setEditor] = useState<Editor | null>(null);
   
+  
+  const contextValue = useMemo(() => ({
+    editor,
+    setEditor
+  }), [editor]); 
+  
   return (
-    <EditorContext.Provider value={{ editor, setEditor }}>
+    <EditorContext.Provider value={contextValue}>
       {children}
     </EditorContext.Provider>
   );

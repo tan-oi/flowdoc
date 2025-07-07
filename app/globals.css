@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-
+@plugin "@tailwindcss/typography";
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -121,7 +121,7 @@
   }
 }
 
-
+/* 
 .ProseMirror {
   @apply bg-transparent text-foreground;
   outline: none !important;
@@ -160,4 +160,84 @@
 .ProseMirror blockquote {
   @apply border-l-[2px] border-gray-400 my-2 pl-2
 }
+ */
 
+.tiptap p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+.tiptap h1.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap p.is-empty::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.hide-placeholder .ProseMirror p.is-editor-empty:first-child::before {
+  display: none !important;
+}
+
+.my-boxxx {
+  border: 1px solid #ccc;
+  background: #ffa3a3;
+  padding: 10px;
+  color: black;
+  margin: 10px 0;
+}
+
+.sexo {
+  color: red;
+}
+
+.highlight {
+  background-color: yellow;
+}
+
+.insert {
+  background-color: rgb(84, 183, 84);
+  color: white;
+  border-radius: 3px;
+}
+
+.remove {
+  background-color: red;
+  color: white;
+  text-decoration: line-through;
+}
+
+.react-component {
+  background-color: var(--purple-light);
+  border: 2px solid var(--purple);
+  border-radius: 0.5rem;
+  margin: 2rem 0;
+  position: relative;
+}
+
+.widget-container {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.widget-container::before {
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 255, 0, 0.2);
+  z-index: 1;
+  pointer-events: none;
+}

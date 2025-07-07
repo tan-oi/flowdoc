@@ -34,7 +34,7 @@ interface ToolbarProps {
 export function Toolbar({ children }: ToolbarProps) {
   const { editor } = useEditorContext();
   const [, forceUpdate] = useState({});
-  
+
   useEffect(() => {
     if (!editor) return;
 
@@ -42,18 +42,18 @@ export function Toolbar({ children }: ToolbarProps) {
       forceUpdate({});
     };
 
-    editor.on('selectionUpdate', updateHandler);
-    editor.on('transaction', updateHandler);
-    
+    editor.on("selectionUpdate", updateHandler);
+    editor.on("transaction", updateHandler);
+
     return () => {
-      editor.off('selectionUpdate', updateHandler);
-      editor.off('transaction', updateHandler);
+      editor.off("selectionUpdate", updateHandler);
+      editor.off("transaction", updateHandler);
     };
   }, [editor]);
-  
+
   if (!editor) return null;
   return (
-    <div className="flex items-center gap-2 border-b pb-2">
+    <div className="flex items-center gap-2 border-b p-2">
       <div className="flex items-center">
         {children}
         <Separator
@@ -125,9 +125,7 @@ export function Toolbar({ children }: ToolbarProps) {
 
         <Toggle
           pressed={editor.isActive("underline")}
-          onPressedChange={() =>
-            editor.chain().focus().toggleUnderline().run()
-          }
+          onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
           disabled={!editor.can().chain().focus().toggleUnderline().run()}
           aria-label="Toggle Underline"
         >
@@ -147,12 +145,7 @@ export function Toolbar({ children }: ToolbarProps) {
 
             // If empty string, remove link
             if (url === "") {
-              editor
-                .chain()
-                .focus()
-                .extendMarkRange("link")
-                .unsetLink()
-                .run();
+              editor.chain().focus().extendMarkRange("link").unsetLink().run();
               return;
             }
 
@@ -170,9 +163,7 @@ export function Toolbar({ children }: ToolbarProps) {
 
         <Toggle
           pressed={editor.isActive("codeBlock")}
-          onPressedChange={() =>
-            editor.chain().focus().toggleCodeBlock().run()
-          }
+          onPressedChange={() => editor.chain().focus().toggleCodeBlock().run()}
           disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
           aria-label="Toggle Codeblock"
         >
@@ -221,6 +212,72 @@ export function Toolbar({ children }: ToolbarProps) {
           }}
         >
           Get Data
+        </Button>
+
+        <Button
+          size={"sm"}
+          onClick={() => {
+             const posi = editor.state.selection.from
+            editor
+              .chain()
+              .focus()
+              .insertContentAt(
+                  3,
+                'how do it <strong>work?<strong>'
+              )
+              .run();
+          }}
+        >
+          Add to the editor
+        </Button>
+
+        <Button
+          size={"sm"}
+          onClick={() => {
+            const { to, from } = editor.state.selection;
+            console.log(to + " " + from);
+          }}
+        >
+          show
+        </Button>
+
+        <Button
+          size={"sm"}
+          onClick={() => {
+            editor
+              .chain()
+              .focus()
+              .insertContentAt(
+                {
+                  from: 1,
+                  to: 39,
+                },
+                `Hello bitcha \t`
+              )
+              .run();
+          }}
+        >
+          replace
+        </Button>
+
+        <Button
+          onClick={() =>
+            editor.view.dispatch(editor.state.tr.setMeta("clearDiff", true))
+          }
+        >
+          cler
+        </Button>
+
+        <Button
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertContent({ type: "reactComponent" })
+              .run()
+          }
+        >
+          dd react
         </Button>
       </div>
     </div>
