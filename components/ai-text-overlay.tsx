@@ -12,29 +12,27 @@ export function TextOverlayAi() {
   const { show, position, editor, docsPos, hideInput } = useOverlayInputStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  console.log(docsPos);
-  console.log(position);
   const { messages, input, handleInputChange, append, setInput, status } =
     useChat({
+     
       id: "4ff5fbbd-16cf-4803-a301-6179f6e1c03",
       onFinish(message, options) {
         console.log(message);
-
         hideInput();
         if (editor && typeof docsPos === "number") {
-          
           queueMicrotask(() => {
             editor.view.dispatch(
               editor.state.tr.setMeta("createDiff", {
                 from: docsPos,
-                to: null,
-                changePayload: message.content,
+                to: docsPos,
+                payload: {
+                  changePayload: message.content,
+                  originalPayload: null,
+                },
+
                 type: "insert",
               })
             );
-            // editor.chain().insertContentAt(docsPos,`${message.content}`).run()
-            // editor.chain().insertContent(`<p>Hello there!</p><p>🚀 Powered by rockets and dreams!</p>`).run()
-            console.log(docsPos);
           });
         }
       },
@@ -46,7 +44,19 @@ export function TextOverlayAi() {
     if (show && textareaRef.current) {
       textareaRef.current.focus();
     }
-  }, [show]);
+    if (editor && editor.view && editor.view.dom) {
+      if (show) {
+        editor.view.dom.classList.add("ai-overlay-active");
+      } else {
+        editor.view.dom.classList.remove("ai-overlay-active");
+      }
+    }
+    return () => {
+      if (editor && editor.view && editor.view.dom) {
+        editor.view.dom.classList.remove("ai-overlay-active");
+      }
+    };
+  }, [show, editor]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -58,13 +68,11 @@ export function TextOverlayAi() {
           });
         }
       }
-
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         handleSubmit();
       }
     };
-
     const handleClickOutside = (e: MouseEvent) => {
       if (
         containerRef.current &&
@@ -78,12 +86,10 @@ export function TextOverlayAi() {
         }
       }
     };
-
     if (show) {
       document.addEventListener("keydown", handleKey);
       document.addEventListener("mousedown", handleClickOutside);
     }
-
     return () => {
       document.removeEventListener("keydown", handleKey);
       document.removeEventListener("mousedown", handleClickOutside);
@@ -92,55 +98,73 @@ export function TextOverlayAi() {
 
   const handleSubmit = () => {
     if (!input.trim() || isLoading) return;
-
     const sendMessage = {
       role: "user" as const,
       content: input,
     };
-
     append(sendMessage);
     setInput("");
   };
 
   if (!show) return null;
 
+  let editorRect = { left: 0, top: 0, width: 600 };
+  if (editor && editor.view && editor.view.dom) {
+    const rect = editor.view.dom.getBoundingClientRect();
+    editorRect = { left: rect.left, top: rect.top, width: rect.width };
+  }
+  const overlayWidth = Math.max(400, Math.min(editorRect.width, 900));
+
   return createPortal(
     isLoading ? (
       <div
-        className="flex items-center bg-secondary rounded-md px-3 py-2 text-sm fixed"
-        style={{ left: position.x - 10, top: position.y, zIndex: 9999 }}
+        className="fixed z-[9999]"
+        style={{
+          left: editorRect.left,
+          top: editorRect.top + 32,
+          width: overlayWidth,
+          minWidth: 400,
+          maxWidth: 900,
+        }}
       >
-        <div className="md:w-[150px] lg:w-[180px] flex items-center min-h-7 gap-2">
+        <div className="flex items-center bg-secondary rounded-md px-4 py-3 text-sm w-full justify-center gap-2 shadow-lg border border-border">
           <Loader2 className="size-5 animate-spin" />
-          <p>Cooking the block </p>
+          <span className="text-foreground font-medium">
+            Cooking the block…
+          </span>
         </div>
       </div>
     ) : (
       <div
         ref={containerRef}
+        className="fixed z-[9999]"
         style={{
-          position: "fixed",
-          left: position.x - 10,
-          top: position.y,
-          zIndex: 9999,
-          width: "100%",
+          left: editorRect.left,
+          top: editorRect.top + 32,
+          width: overlayWidth,
+          minWidth: 400,
+          maxWidth: 900,
         }}
       >
-        <div className="md:max-w-lg lg:max-w-xl space-x-1 flex justify-center items-center w-full bg-secondary rounded-md relative">
-          <Textarea
-            ref={textareaRef}
-            placeholder="Type and ask AI"
-            className="min-h-10 max-h-30 pb-12 w-full mr-0"
-            value={input}
-            onChange={handleInputChange}
-          />
-
-          <Button
-            className="absolute bottom-2 right-2 cursor-pointer"
-            onClick={handleSubmit}
-          >
-            <Send className="size-4" />
-          </Button>
+        <div className="bg-secondary rounded-md shadow-lg border border-border flex flex-col w-full p-0">
+          <div className="flex items-center justify-between px-3 pt-3 pb-1">
+            <span className="text-foreground font-medium text-sm">
+              Ask AI to insert content
+            </span>
+          </div>
+          <div className="flex flex-row items-end px-3 pb-3 gap-2">
+            <Textarea
+              ref={textareaRef}
+              placeholder="Type and ask AI"
+              className="min-h-10 max-h-30 w-full text-foreground bg-background border border-border focus:ring-0 focus:outline-none"
+              value={input}
+              onChange={handleInputChange}
+              style={{ margin: 0, width: "100%" }}
+            />
+            <Button className="ml-2 h-10 px-3" onClick={handleSubmit}>
+              <Send className="size-4" />
+            </Button>
+          </div>
         </div>
       </div>
     ),

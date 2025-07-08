@@ -1,12 +1,19 @@
 import { Extension } from "@tiptap/core";
-import { Plugin, PluginKey, EditorState } from "prosemirror-state";
+import {  diffWords } from "diff";
+import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
+
+let currentEditor: any = null;
+
+export const setCurrentEditor = (editor: any) => {
+  currentEditor = editor;
+};
 
 export const DiffExtension = Extension.create({
   name: "diffing",
 
   addProseMirrorPlugins() {
-    const plugin = new Plugin({
+    const plugin: Plugin = new Plugin({
       key: new PluginKey("diffDecor"),
 
       state: {
@@ -30,152 +37,164 @@ export const DiffExtension = Extension.create({
 
           const meta = tr.getMeta("createDiff");
           if (meta) {
-            const { to, from, changePayload, type } = meta;
-          
+            const { to, from, payload, type } = meta;
+            console.log(payload);
+            const { changePayload, originalPayload } = payload;
+            if (type === "replace" && !changePayload) return newState;
 
             if (!changePayload) {
-              console.log("failed");
               return newState;
             }
 
             if (type === "replace") {
-              if (from >= 0 && to <= tr.doc.content.size && from <= to && Array.isArray(changePayload)) {
+              //only inline works rn.
+              if (
+                currentEditor &&
+                from >= 0 &&
+                to <= tr.doc.content.size &&
+                from <= to 
+                
+                // &&
+                // Array.isArray(changePayload)
+
+              ) {
                 try {
                   const hideText = Decoration.inline(from, to, {
-                    style: "display: none !important;",
+                    style: "display : none !important",
                     class: "diff-hidden-original",
                   });
 
-                  const widgetDecor = Decoration.widget(from, () => {
+                  const replaceDecor = Decoration.widget(from, () => {
                     const container = document.createElement("div");
-                    container.className = `widget-replace-container`
+                    container.className = "widget-container inplace-change";
 
-                    const divData = document.createElement("div");
-                    console.log("div creating");
-                    divData.innerHTML = diffToSentence(changePayload);
-                    divData.className = "diff-content";
+                    const buttonContainer = document.createElement("div");
+                    buttonContainer.className = "diff-buttons";
 
-                    const buttonContainer = document.createElement('div');
-                    buttonContainer.className = `diff-buttons`;
-                    
                     const acceptBtn = document.createElement("div");
-                    acceptBtn.innerText = 'Accept'
-                    acceptBtn.className = 'accept-btn'; 
-                    // acceptBtn.onclick = (e) => {
-                    //   e.preventDefault();
-                    //   handleAccept();
-                    // }
+                    acceptBtn.innerText = "Accept";
+                    acceptBtn.className = "accept-btn";
 
+                    acceptBtn.onclick = (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+
+                      if (currentEditor) {
+                        currentEditor.chain().insertContentAt({
+                          from,to
+                        },changePayload)
+                        .setMeta("clearDiff",true).run()
+                      }
+                    };
 
                     const rejectBtn = document.createElement("div");
-                    rejectBtn.innerText = 'Reject'
-                    rejectBtn.className = 'reject-btn'; 
-                    // acceptBtn.onclick = (e) => {
-                    //   e.preventDefault();
-                    //   handleReject();
-                    // }
+                    rejectBtn.innerText = "Reject";
+                    rejectBtn.className = "reject-btn";
+                    rejectBtn.onclick = (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (currentEditor) {
+                        currentEditor.chain().setMeta("clearDiff", true).run();
+                      }
+                    };
 
                     buttonContainer.appendChild(acceptBtn);
                     buttonContainer.appendChild(rejectBtn);
-                    container.appendChild(divData);
-                    container.appendChild(buttonContainer);
 
+                    const newDiv = document.createElement("div");
+
+                    newDiv.className = `diff-content`;
+                    const diffCalc = diffWords(
+                      originalPayload,
+                      changePayload
+                    );
+
+                    console.log(diffCalc);
+                    newDiv.innerHTML = diffToSentence(diffCalc);
+
+                    container.appendChild(buttonContainer);
+                    container.appendChild(newDiv);
 
                     return container;
                   });
 
-                  newState = newState.add(tr.doc, [hideText, widgetDecor]);
-                } catch (error) {
-                  console.warn("Failed to add decoration:", error);
+                  newState = newState.add(tr.doc, [replaceDecor, hideText]);
+                } catch (err) {
+                  console.log(err);
                 }
               }
-               else {
-                console.warn("Invalid decoration positions:", {
-                  from,
-                  to,
-                  docSize: tr.doc.content.size,
-                });
-              }
             }
-             else if (type === "insert") {
-              
+
+            if (type === "insert") {
               try {
-               
                 const insertDecor = Decoration.widget(from, () => {
                   const container = document.createElement("div");
-                  container.className = `widget-container`
+                  container.className = `widget-container`;
+
+                  const buttonContainer = document.createElement("div");
+                  buttonContainer.className = `diff-buttons`;
+
+                  const acceptBtn = document.createElement("div");
+                  acceptBtn.innerText = "Accept";
+                  acceptBtn.className = "accept-btn";
+                  acceptBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (currentEditor) {
+                      currentEditor
+                        .chain()
+                        .insertContentAt(from, changePayload)
+                        .setMeta("clearDiff", true)
+                        .focus(from + (changePayload?.length || 0))
+                        .run();
+                    }
+                  };
+
+                  const rejectBtn = document.createElement("div");
+                  rejectBtn.innerText = "Reject";
+                  rejectBtn.className = "reject-btn";
+                  rejectBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (currentEditor) {
+                      currentEditor.chain().setMeta("clearDiff", true).run();
+                    }
+                  };
+
+                  buttonContainer.appendChild(acceptBtn);
+                  buttonContainer.appendChild(rejectBtn);
+
                   const divData = document.createElement("div");
-                  console.log("div creating");
                   divData.innerHTML = changePayload;
                   divData.className = "diff-content";
 
-
-                  
-                  const buttonContainer = document.createElement('div');
-                  buttonContainer.className = `diff-buttons`;
-                  
-                  const acceptBtn = document.createElement("div");
-                  acceptBtn.innerText = 'Accept'
-                  acceptBtn.className = 'accept-btn'; 
-                  acceptBtn.onclick = (e) => {
-                    e.preventDefault();
-                    // handleAccept();
-                  }
-
-
-                  const rejectBtn = document.createElement("div");
-                  rejectBtn.innerText = 'Reject'
-                  rejectBtn.className = 'reject-btn'; 
-                  acceptBtn.onclick = (e) => {
-                    e.preventDefault();
-                    // handleReject();
-                  }
-
-                  buttonContainer.appendChild(acceptBtn);
-                    buttonContainer.appendChild(rejectBtn);
-                    container.appendChild(divData);
-                    container.appendChild(buttonContainer);
-
-
+                  container.appendChild(buttonContainer);
+                  container.appendChild(divData);
 
                   return container;
                 });
                 newState = newState.add(tr.doc, [insertDecor]);
-              } catch (err) {
-                console.log("failed");
-              }
-            } else {
-              const trail = Decoration.widget(from, () => {
-                const span = document.createElement("span");
-                console.log("delete");
-
-                return span;
-              });
-
-              newState = newState.add(tr.doc, [trail]);
+              } catch (err) {}
             }
           }
           return newState;
         },
       },
       props: {
-        decorations(state: EditorState) {
+        decorations(state: EditorState): DecorationSet {
           return plugin.getState(state);
         },
       },
     });
-    
     return [plugin];
   },
 });
 
-function diffToSentence(diffs) {
+function diffToSentence(diffs: any[]): string {
   let result = "";
-
   for (let i = 0; i < diffs.length; i++) {
     const part = diffs[i];
     const prevPart = i > 0 ? diffs[i - 1] : null;
-
     if (
       prevPart &&
       (prevPart.added || prevPart.removed) &&
@@ -186,18 +205,13 @@ function diffToSentence(diffs) {
     ) {
       result += " ";
     }
-
     if (part.added) {
-      result += `<span class="insert">${part.value}</span>`;
+      result += `<span class=\"insert\">${part.value}</span>`;
     } else if (part.removed) {
-      result += `<span class="remove">${part.value}</span>`;
+      result += `<span class=\"remove\">${part.value}</span>`;
     } else {
       result += part.value;
     }
   }
-
   return result;
 }
-
-
-

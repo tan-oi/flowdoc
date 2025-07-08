@@ -8,7 +8,7 @@ import Link from "@tiptap/extension-link";
 import { BubbleMenu } from "@tiptap/react";
 import { Button } from "./ui/button";
 import { MyDecorationExtension } from "@/extensions/highlight";
-import { DiffExtension } from "@/extensions/diff";
+import { DiffExtension, setCurrentEditor } from "@/extensions/diff";
 import { diffWords } from "diff";
 import { testNode } from "@/extensions/test";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -72,7 +72,7 @@ const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
       DiffExtension,
       testNode(),
       UniqueID.configure({
-        types: ["heading", "paragraph"],
+        types: ["heading", "paragraph","orderedList","bulletList"],
         generateID : () => nanoid(7)
       }),
       Slash.configure({
@@ -93,9 +93,8 @@ const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
     },
     content: data || null,
     onCreate: ({ editor }) => {
-    
-
       setEditor(editor);
+      setCurrentEditor(editor);
     },
     onUpdate: ({ editor }) => {
       if (
