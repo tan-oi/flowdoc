@@ -1,44 +1,57 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "./ui/button";
 import { useOverlayInputStore } from "@/store/useEditorAIStore";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2 } from "lucide-react";
-import { useChat } from "@ai-sdk/react";
+import { experimental_useObject as useObject, useChat } from "@ai-sdk/react";
+import { getState } from "@/lib/print";
+import { generateSchema } from "@/app/api/generate/route";
+import { applyAIOperation } from "@/lib/functions/applyOperations";
 
 export function TextOverlayAi() {
+  const [input, setInput] = useState<string>("");
+  const [messages, setMessages] = useState<any[]>([]);
   const { show, position, editor, docsPos, hideInput } = useOverlayInputStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { messages, input, handleInputChange, append, setInput, status } =
-    useChat({
-     
-      id: "4ff5fbbd-16cf-4803-a301-6179f6e1c03",
-      onFinish(message, options) {
-        console.log(message);
-        hideInput();
-        if (editor && typeof docsPos === "number") {
-          queueMicrotask(() => {
-            editor.view.dispatch(
-              editor.state.tr.setMeta("createDiff", {
-                from: docsPos,
-                to: docsPos,
-                payload: {
-                  changePayload: message.content,
-                  originalPayload: null,
-                },
+  const positionsRef = useRef(new Map());
+  const { submit, object, isLoading, error } = useObject({
+    api: "/api/generate",
+    schema: generateSchema,
+    onFinish: (result) => {
+      console.log(result.object);
 
-                type: "insert",
-              })
-            );
-          });
-        }
-      },
-    });
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant" as const,
+          content: result.object?.content,
+        },
+      ]);
+      hideInput();
 
-  const isLoading = status === "submitted" || status === "streaming";
+      // if (editor && typeof docsPos === "number") {
+      //   queueMicrotask(() => {
+      //     editor.view.dispatch(
+      //       editor.state.tr.setMeta("createDiff", {
+      //         from: docsPos,
+      //         to: docsPos,
+      //         payload: {
+      //           changePayload: result.object?.content,
+      //           originalPayload: null,
+      //         },
+      //         type: "insert",
+      //       })
+      //     );
+      //   });
+      // }
+
+      applyAIOperation(editor, result.object, docsPos, positionsRef);
+    },
+  });
 
   useEffect(() => {
     if (show && textareaRef.current) {
@@ -98,11 +111,21 @@ export function TextOverlayAi() {
 
   const handleSubmit = () => {
     if (!input.trim() || isLoading) return;
-    const sendMessage = {
+
+    const { context, positionByIds } = getState(editor?.state.doc);
+    console.log(context);
+    const userPrompt = `USER QUERY : ${input}`;
+    const senMessages = context + userPrompt;
+    positionsRef.current = positionByIds;
+    const newUserMessage = {
       role: "user" as const,
-      content: input,
+      content: senMessages,
     };
-    append(sendMessage);
+
+    const allMessages = [...messages, newUserMessage];
+    setMessages(allMessages);
+
+    submit({ messages: allMessages });
     setInput("");
   };
 
@@ -158,7 +181,7 @@ export function TextOverlayAi() {
               placeholder="Type and ask AI"
               className="min-h-10 max-h-30 w-full text-foreground bg-background border border-border focus:ring-0 focus:outline-none"
               value={input}
-              onChange={handleInputChange}
+              onChange={(e) => setInput(e.target.value)}
               style={{ margin: 0, width: "100%" }}
             />
             <Button className="ml-2 h-10 px-3" onClick={handleSubmit}>

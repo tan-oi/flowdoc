@@ -72,6 +72,7 @@ export function BubbleMenuComponent() {
                     originalPayload: text,
                   },
                   type,
+                  replaceType : "normal"
                 })
               );
             }}

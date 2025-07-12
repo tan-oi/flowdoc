@@ -1,5 +1,5 @@
 import { Extension } from "@tiptap/core";
-import {  diffWords } from "diff";
+import { diffWords } from "diff";
 import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 
@@ -37,8 +37,8 @@ export const DiffExtension = Extension.create({
 
           const meta = tr.getMeta("createDiff");
           if (meta) {
-            const { to, from, payload, type } = meta;
-            console.log(payload);
+            const { to, from, payload, type, replaceType } = meta;
+            console.log(payload," ", replaceType);
             const { changePayload, originalPayload } = payload;
             if (type === "replace" && !changePayload) return newState;
 
@@ -52,11 +52,7 @@ export const DiffExtension = Extension.create({
                 currentEditor &&
                 from >= 0 &&
                 to <= tr.doc.content.size &&
-                from <= to 
-                
-                // &&
-                // Array.isArray(changePayload)
-
+                from <= to
               ) {
                 try {
                   const hideText = Decoration.inline(from, to, {
@@ -64,61 +60,129 @@ export const DiffExtension = Extension.create({
                     class: "diff-hidden-original",
                   });
 
-                  const replaceDecor = Decoration.widget(from, () => {
-                    const container = document.createElement("div");
-                    container.className = "widget-container inplace-change";
+                  if (replaceType === "inline") {
+                    const replaceDecor = Decoration.widget(from, () => {
+                      const container = document.createElement("div");
+                      container.className = "widget-container inplace-change";
 
-                    const buttonContainer = document.createElement("div");
-                    buttonContainer.className = "diff-buttons";
+                      const buttonContainer = document.createElement("div");
+                      buttonContainer.className = "diff-buttons";
 
-                    const acceptBtn = document.createElement("div");
-                    acceptBtn.innerText = "Accept";
-                    acceptBtn.className = "accept-btn";
+                      const acceptBtn = document.createElement("div");
+                      acceptBtn.innerText = "Accept";
+                      acceptBtn.className = "accept-btn";
 
-                    acceptBtn.onclick = (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                      acceptBtn.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
 
-                      if (currentEditor) {
-                        currentEditor.chain().insertContentAt({
-                          from,to
-                        },changePayload)
-                        .setMeta("clearDiff",true).run()
-                      }
-                    };
+                        if (currentEditor) {
+                          currentEditor
+                            .chain()
+                            .insertContentAt(
+                              {
+                                from,
+                                to,
+                              },
+                              changePayload
+                            )
+                            .setMeta("clearDiff", true)
+                            .run();
+                        }
+                      };
 
-                    const rejectBtn = document.createElement("div");
-                    rejectBtn.innerText = "Reject";
-                    rejectBtn.className = "reject-btn";
-                    rejectBtn.onclick = (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (currentEditor) {
-                        currentEditor.chain().setMeta("clearDiff", true).run();
-                      }
-                    };
+                      const rejectBtn = document.createElement("div");
+                      rejectBtn.innerText = "Reject";
+                      rejectBtn.className = "reject-btn";
+                      rejectBtn.onclick = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (currentEditor) {
+                          currentEditor
+                            .chain()
+                            .setMeta("clearDiff", true)
+                            .run();
+                        }
+                      };
 
-                    buttonContainer.appendChild(acceptBtn);
-                    buttonContainer.appendChild(rejectBtn);
+                      buttonContainer.appendChild(acceptBtn);
+                      buttonContainer.appendChild(rejectBtn);
 
-                    const newDiv = document.createElement("div");
+                      const newDiv = document.createElement("div");
 
-                    newDiv.className = `diff-content`;
-                    const diffCalc = diffWords(
-                      originalPayload,
-                      changePayload
-                    );
+                      newDiv.className = `diff-content`;
+                      const diffCalc = diffWords(
+                        originalPayload,
+                        changePayload
+                      );
 
-                    console.log(diffCalc);
-                    newDiv.innerHTML = diffToSentence(diffCalc);
+                      console.log(diffCalc);
+                      newDiv.innerHTML = diffToSentence(diffCalc);
 
-                    container.appendChild(buttonContainer);
-                    container.appendChild(newDiv);
+                      container.appendChild(buttonContainer);
+                      container.appendChild(newDiv);
 
-                    return container;
-                  });
+                      return container;
+                    });
 
-                  newState = newState.add(tr.doc, [replaceDecor, hideText]);
+                    newState = newState.add(tr.doc, [replaceDecor, hideText]);
+                  } else if (replaceType === "normal") {
+                    console.log('hello');
+                      const replaceOverlay = Decoration.widget(from, () => {
+                        const container = document.createElement("div");
+                        container.className = "overlay-container";
+
+                        const buttonContainer = document.createElement("div");
+                        buttonContainer.className = "diff-buttons";
+
+                        const acceptBtn = document.createElement("div");
+                        acceptBtn.innerText = "Accept";
+                        acceptBtn.className = "accept-btn";
+
+                        acceptBtn.onclick = (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          if(currentEditor) {
+                            currentEditor.chain().insertContentAt({
+                              from,to
+                            }, changePayload).setMeta("clearDiff",true).run();
+                          }
+                        }
+
+                        const rejectBtn = document.createElement("div");
+                        rejectBtn.innerText = "Reject";
+                        rejectBtn.className = "reject-btn";
+                        rejectBtn.onclick = (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          if(currentEditor) {
+                            currentEditor.chain().setMeta("clearDiff",true).run();
+                          }
+                        }
+
+                        buttonContainer.appendChild(acceptBtn);
+                        buttonContainer.appendChild(rejectBtn);
+
+                        const oldDiv = document.createElement("div");
+                        const newDiv = document.createElement("div");
+
+                        oldDiv.className = "old-overlay-content";
+                        newDiv.className = "new-overlay-content"
+
+                        oldDiv.innerHTML = originalPayload;
+                        newDiv.innerHTML = changePayload;
+
+                        container.appendChild(buttonContainer);
+                        container.appendChild(oldDiv);
+                        container.appendChild(newDiv);
+
+                        return container;
+                      })
+
+                      newState = newState.add(tr.doc,[hideText,replaceOverlay]);
+                  }
                 } catch (err) {
                   console.log(err);
                 }

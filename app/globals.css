@@ -240,6 +240,22 @@
   display: none !important;
 }
 
+.overlay-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  color: #fff;
+  margin: 8px 0;
+  pointer-events: auto;
+  user-select: text;
+  min-width: 120px;
+  max-width: 100%;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  z-index: 2;
+  box-shadow: 0 2px 8px 0 rgba(34,197,94,0.08);
+  gap : 10px;
+}
 
 .widget-container {
   display: block;
@@ -313,6 +329,14 @@
   font-weight: 400;
   margin-top: 0;
   margin-bottom: 0;
+}
+
+.old-overlay-content{
+  background-color: #dc2626;
+}
+
+.new-overlay-content {
+  background-color:#16a34a;
 }
 
 /* Remove selection highlight when widget is present */

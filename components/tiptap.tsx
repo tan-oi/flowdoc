@@ -26,12 +26,13 @@ import { BubbleMenuComponent } from "./bubble-menu";
 // import TaskList from "@tiptap/extension-task-list";
 // import TaskItem from "@tiptap/extension-task-item";
 import UniqueID from "@tiptap/extension-unique-id";
-import { nanoid } from 'nanoid'
+import { nanoid,customAlphabet } from 'nanoid'
 
 const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
   const { triggerNavigation, docId } = useEditorId(id);
   // const { content, setContent } = useEditorStore();
   // console.log(content);
+  const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 7);
 
   const newtext = `Focusing on critical areas such as internet and email abuse yeah bullshit.`;
 
@@ -72,8 +73,8 @@ const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
       DiffExtension,
       testNode(),
       UniqueID.configure({
-        types: ["heading", "paragraph","orderedList","bulletList"],
-        generateID : () => nanoid(7)
+        types: ["heading", "paragraph","orderedList","bulletList","listItem"],
+        generateID : () => nanoid()
       }),
       Slash.configure({
         suggestion: {
@@ -192,3 +193,5 @@ const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
 };
 
 export default Tiptap;
+
+

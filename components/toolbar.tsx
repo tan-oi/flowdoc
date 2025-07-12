@@ -26,6 +26,7 @@ import { Separator } from "./ui/separator";
 
 import { useEditorContext } from "./editor-provider";
 import { Toggle } from "./ui/toggle";
+import { getState } from "@/lib/print";
 
 interface ToolbarProps {
   children?: React.ReactNode;
@@ -205,12 +206,9 @@ export function Toolbar({ children }: ToolbarProps) {
 
         <Button
           variant="outline"
-          size="sm"
-          onClick={() => {
-            console.log("Editor JSON:", editor.getJSON());
-            console.log("Editor HTML:", editor.getHTML());
-          }}
-        >
+            size="sm"
+              onClick={() => getState(editor.state.doc)}
+            >
           Get Data
         </Button>
 
@@ -248,11 +246,11 @@ export function Toolbar({ children }: ToolbarProps) {
               .chain()
               .focus()
               .insertContentAt(
-                {
-                  from: 1,
-                  to: 39,
-                },
-                `Hello bitcha \t`
+              {
+                from : 0,
+                to : 72
+              },
+                `Quantum tunneling allows particles to pass through barriers that they classically shouldn’t.`
               )
               .run();
           }}
