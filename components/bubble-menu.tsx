@@ -16,7 +16,7 @@ export function BubbleMenuComponent() {
       <BubbleMenu
         editor={editor}
         tippyOptions={{
-          duration: 10,
+          duration: [500, 0],
 
           offset: [0, 8],
           placement: "top-end",
@@ -72,7 +72,7 @@ export function BubbleMenuComponent() {
                     originalPayload: text,
                   },
                   type,
-                  replaceType : "normal"
+                  replaceType: "inplace",
                 })
               );
             }}

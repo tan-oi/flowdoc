@@ -47,7 +47,7 @@ export const DiffExtension = Extension.create({
             }
 
             if (type === "replace") {
-              //only inline works rn.
+              console.log('working?');
               if (
                 currentEditor &&
                 from >= 0 &&
@@ -60,7 +60,8 @@ export const DiffExtension = Extension.create({
                     class: "diff-hidden-original",
                   });
 
-                  if (replaceType === "inline") {
+                  if (replaceType === "inplace") {
+                    console.log('inline');
                     const replaceDecor = Decoration.widget(from, () => {
                       const container = document.createElement("div");
                       container.className = "widget-container inplace-change";

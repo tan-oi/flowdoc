@@ -10,6 +10,7 @@ import { experimental_useObject as useObject, useChat } from "@ai-sdk/react";
 import { getState } from "@/lib/print";
 import { generateSchema } from "@/app/api/generate/route";
 import { applyAIOperation } from "@/lib/functions/applyOperations";
+import { Editor } from "@tiptap/react";
 
 export function TextOverlayAi() {
   const [input, setInput] = useState<string>("");
@@ -31,7 +32,7 @@ export function TextOverlayAi() {
           content: result.object?.content,
         },
       ]);
-      hideInput();
+      hideInput();``
 
       // if (editor && typeof docsPos === "number") {
       //   queueMicrotask(() => {
@@ -49,7 +50,12 @@ export function TextOverlayAi() {
       //   });
       // }
 
-      applyAIOperation(editor, result.object, docsPos, positionsRef);
+      applyAIOperation(
+        editor as Editor,
+        result?.object,
+        docsPos as number,
+        positionsRef
+      );
     },
   });
 

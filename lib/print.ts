@@ -1,8 +1,22 @@
-export function getState(doc: any) {
+
+import { Node as ProseMirrorNode } from '@tiptap/pm/model'
+
+interface Position {
+  to : number;
+  from : number;
+
+}
+interface GetStateResult {
+  context: string;
+  positionByIds: Map<string, Position>;
+}
+
+
+export function getState(doc: any) : GetStateResult{
   let context = "Current document context :\n\nDocument blocks :\n";
 
-  const positionByIds = new Map();
-  doc.descendants((node, pos, parent) => {
+  const positionByIds = new Map<string, Position>();
+  doc.descendants((node : ProseMirrorNode, pos : number, parent?:ProseMirrorNode) => {
     if (!node.type.isBlock) return;
 
     if (node.type.name === "paragraph" && parent?.type?.name === "listItem")

@@ -206,23 +206,23 @@ export function Toolbar({ children }: ToolbarProps) {
 
         <Button
           variant="outline"
-            size="sm"
-              onClick={() => getState(editor.state.doc)}
-            >
+          size="sm"
+          onClick={() => {
+            console.log(editor.getJSON());
+            console.log(editor.getHTML());
+          }}
+        >
           Get Data
         </Button>
 
         <Button
           size={"sm"}
           onClick={() => {
-             const posi = editor.state.selection.from
+            const posi = editor.state.selection.from;
             editor
               .chain()
               .focus()
-              .insertContentAt(
-                  3,
-                'how do it <strong>work?<strong>'
-              )
+              .insertContentAt(3, "how do it <strong>work?<strong>")
               .run();
           }}
         >
@@ -232,8 +232,11 @@ export function Toolbar({ children }: ToolbarProps) {
         <Button
           size={"sm"}
           onClick={() => {
-            const { to, from } = editor.state.selection;
-            console.log(to + " " + from);
+            editor.commands.insertContent(
+              '<react-component count="999"></react-component>'
+            );
+            // const { to, from } = editor.state.selection;
+            // console.log(to + " " + from);
           }}
         >
           show
@@ -246,10 +249,10 @@ export function Toolbar({ children }: ToolbarProps) {
               .chain()
               .focus()
               .insertContentAt(
-              {
-                from : 0,
-                to : 72
-              },
+                {
+                  from: 0,
+                  to: 72,
+                },
                 `Quantum tunneling allows particles to pass through barriers that they classically shouldn’t.`
               )
               .run();
@@ -267,15 +270,95 @@ export function Toolbar({ children }: ToolbarProps) {
         </Button>
 
         <Button
-          onClick={() =>
-            editor
-              .chain()
-              .focus()
-              .insertContent({ type: "reactComponent" })
-              .run()
-          }
+          onClick={() => {
+            const { from } = editor.state.selection;
+            const { doc } = editor.state;
+
+            const resolvedPos = doc.resolve(from);
+            const currentBlockPos = resolvedPos.start(resolvedPos.depth);
+            const currentBlock = resolvedPos.node(resolvedPos.depth);
+
+            const afterCurrentBlock = currentBlockPos + currentBlock.nodeSize;
+            const hasContentAfter = afterCurrentBlock < doc.content.size;
+
+            console.log("Current block:", currentBlock.type.name);
+            console.log("Has content after:", hasContentAfter);
+            console.log("After position:", afterCurrentBlock);
+            console.log("Doc size:", doc.content.size);
+
+            const content = [{ type: "reactComponent" }];
+
+            if (!hasContentAfter) {
+              content.push({ type: "paragraph" });
+            }
+
+            editor.chain().focus().insertContent(content).run();
+
+            if (hasContentAfter) {
+              const componentSize = 1;
+              const nextBlockPos = from + componentSize;
+
+              editor.commands.setTextSelection(nextBlockPos);
+            } else {
+              const componentSize = 1;
+              const newParagraphPos = from + componentSize;
+              editor.commands.setTextSelection(newParagraphPos);
+            }
+          }}
         >
           dd react
+        </Button>
+
+        <Button
+          onClick={() => {
+            const { from } = editor.state.selection;
+            const { doc } = editor.state;
+
+            const resolvedPos = doc.resolve(from);
+            const currentBlockPos = resolvedPos.start(resolvedPos.depth);
+            const currentBlock = resolvedPos.node(resolvedPos.depth);
+
+            const afterCurrentBlock = currentBlockPos + currentBlock.nodeSize;
+            const hasContentAfter = afterCurrentBlock < doc.content.size;
+
+            const content: Array<{ type: string; attrs?: any }> = [
+              {
+                type: "ReactiveTextBlock",
+                attrs: {
+                  id: `text-${Date.now()}`,
+                  computedContent: `Curiosity fuels learning beyond boundaries`,
+                  prompt: "Some prompt",
+                  sourceHash: "879a89367fad4899b61c9113c9d3532036992b7e16a4ea835e3184bdef5f1a75",
+                  dependencyHash: "879a89367fad4899b61c9113c9d3532036992b7e16a4ea835e3184bdef5f1a75",
+                  dependencyScope: 'document',
+                  type: "user-generated",
+                  status: "idle",
+                  errorMessage: null
+                },
+              },
+            ];
+
+            if (!hasContentAfter) {
+              content.push({
+                type: "paragraph",
+                attrs: {},
+              });
+            }
+
+            editor.chain().focus().insertContent(content).run();
+
+            if (hasContentAfter) {
+              const componentSize = 1;
+              const nextBlockPos = from + componentSize;
+              editor.commands.setTextSelection(nextBlockPos);
+            } else {
+              const componentSize = 1;
+              const newParagraphPos = from + componentSize;
+              editor.commands.setTextSelection(newParagraphPos);
+            }
+          }}
+        >
+          reactive
         </Button>
       </div>
     </div>

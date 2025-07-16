@@ -1,7 +1,18 @@
-import { generateSchema } from "@/app/api/generate/route";
 import { Editor } from "@tiptap/react";
+interface Result {
+  content: string;
+  position: "before" | "after" | "replace";
+  operation: "replace" | "insert";
+  targetBlock?: string;
+  replaceType?: "normal" | "inplace" | "insertReactive";
+}
 
-export function applyAIOperation(editor : Editor, result , docsPos : number, capturedPositions) {
+export function applyAIOperation(
+  editor: Editor,
+  result: Result,
+  docsPos: number,
+  capturedPositions
+) {
   if (!editor || typeof docsPos !== "number") return;
 
   queueMicrotask(() => {
@@ -10,10 +21,11 @@ export function applyAIOperation(editor : Editor, result , docsPos : number, cap
     const blockId = result.targetBlock;
     const position = result.position;
     const replaceType = result.replaceType;
-
+    console.log(operationType);
     const onEditorPosition = capturedPositions.current;
 
     const range = onEditorPosition.get(blockId);
+    console.log(range);
     const from = range?.from ?? docsPos;
     const to = range?.to ?? docsPos;
     console.log(from, " ", to);
@@ -36,27 +48,16 @@ export function applyAIOperation(editor : Editor, result , docsPos : number, cap
         );
         break;
 
-      case "insertCustomNode":
-        editor.view.dispatch(
-          editor.state.tr.setMeta("createDiff", {
-            from: docsPos,
-            to: docsPos,
-            payload: {
-              changePayload: content,
-              originalPayload: null,
-              nodeType: result.object?.nodeType, // "codeBlock", "image", "table", etc.
-              nodeAttrs: result.object?.nodeAttrs, // { language: "javascript" } for code blocks
-            },
-            type: "insertCustomNode",
-          })
-        );
+      case "insertReactive":
+        console.log(result);
+        console.log();
+
         break;
 
       case "replace":
         let textBetween;
-        if (replaceType === "normal") {
-          textBetween = editor.state.doc.textBetween(from, to, " ");
-        }
+
+        textBetween = editor.state.doc.textBetween(from, to, " ");
 
         editor.view.dispatch(
           editor.state.tr.setMeta("createDiff", {
@@ -76,5 +77,6 @@ export function applyAIOperation(editor : Editor, result , docsPos : number, cap
   });
 }
 
-
 //WORKS PRETTY WELL. INFACT.
+
+//** When the document contains only one empty paragraph block or when you want to reference the last empty paragraph(e.g., [abc123] paragraph: with no text), treat the editor as empty. In this case, always return:

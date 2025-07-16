@@ -5,9 +5,7 @@ import { useEditorContext } from "./editor-provider";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
-import { BubbleMenu } from "@tiptap/react";
-import { Button } from "./ui/button";
-import { MyDecorationExtension } from "@/extensions/highlight";
+
 import { DiffExtension, setCurrentEditor } from "@/extensions/diff";
 import { diffWords } from "diff";
 import { testNode } from "@/extensions/test";
@@ -20,21 +18,25 @@ import {
 import { suggestionItems } from "@/lib/slash-commands";
 import SlashCommand from "./slash-command";
 
-import { useEditorStore } from "@/store/chatStore";
 import { useEditorId } from "@/hooks/use-editorId";
 import { BubbleMenuComponent } from "./bubble-menu";
 // import TaskList from "@tiptap/extension-task-list";
 // import TaskItem from "@tiptap/extension-task-item";
 import UniqueID from "@tiptap/extension-unique-id";
-import { nanoid,customAlphabet } from 'nanoid'
+import { customAlphabet } from "nanoid";
+import { TextNode } from "@/extensions/text-node";
+import { useEffect } from "react";
+import { useDebouncedEditorSync } from "@/hooks/useDebounceEditorSync";
+import { useUpdateTimer } from "@/hooks/useUpdateTimer";
+import { setupLlmOrchestrator } from "@/lib/services/llmOrchestrator";
 
 const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
   const { triggerNavigation, docId } = useEditorId(id);
-  // const { content, setContent } = useEditorStore();
-  // console.log(content);
-  const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 7);
 
-  const newtext = `Focusing on critical areas such as internet and email abuse yeah bullshit.`;
+  const nanoid = customAlphabet(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    7
+  );
 
   const { setEditor } = useEditorContext();
 
@@ -59,22 +61,27 @@ const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
         },
       }),
       Placeholder.configure({
-        placeholder: ({ node,editor }) => {
+        placeholder: ({ node, editor }) => {
           if (node.type.name === "heading") {
             return "Heading1";
           }
 
-         
           return "Press '/' for commands...";
         },
       }),
       Underline,
-      MyDecorationExtension,
+      TextNode,
       DiffExtension,
       testNode(),
       UniqueID.configure({
-        types: ["heading", "paragraph","orderedList","bulletList","listItem"],
-        generateID : () => nanoid()
+        types: [
+          "heading",
+          "paragraph",
+          "orderedList",
+          "bulletList",
+          "listItem",
+        ],
+        generateID: () => nanoid(),
       }),
       Slash.configure({
         suggestion: {
@@ -105,9 +112,9 @@ const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
           .trim()
           .match(/[a-zA-Z0-9]/)
       ) {
-        const now = Date.now();
         triggerNavigation();
       }
+
       // setContent(editor.getJSON());
     },
     onSelectionUpdate: ({ editor, transaction }) => {
@@ -123,6 +130,14 @@ const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
     },
   });
 
+  useEffect(() => {
+    if (!editor) return;
+    console.log('yes');
+    const cleanup = setupLlmOrchestrator(editor);
+    return cleanup;
+  }, [editor]);
+
+ 
   if (!editor) return null;
   return (
     <>
@@ -137,61 +152,9 @@ const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
           </SlashCmdProvider>
         </div>
       </div>
-      {/* <BubbleMenu
-        editor={editor}
-        tippyOptions={{
-          duration: 10,
-
-          offset: [0, 8],
-          placement: "top-end",
-          arrow: false,
-          maxWidth: "none",
-        }}
-      >
-        <div className="flex items-center gap-1 bg-popover border rounded-md p-1 shadow-lg">
-          <Button
-            size="sm"
-            variant={editor.isActive("bold") ? "default" : "outline"}
-            onClick={() => editor.chain().focus().toggleBold().run()}
-          >
-            Bold
-          </Button>
-
-          <Button
-            size="sm"
-            variant={editor.isActive("italic") ? "default" : "outline"}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-          >
-            Italic
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              const { from, to } = editor.state.selection;
-              const text = editor.state.doc.textBetween(from, to, " ");
-
-              const diffs = diffWords(text, newtext);
-              editor.view.dispatch(
-                editor.state.tr.setMeta("createDiff", { from, to, diffs })
-              );
-              // const html = diffToSentence(diffs);
-
-              // console.log(html);
-
-              //  editor.commands.insertContentAt({ from, to }, `${html}`);
-            }}
-          >
-            replace
-          </Button>
-        </div>
-      </BubbleMenu> */}
       <BubbleMenuComponent />
     </>
   );
 };
 
 export default Tiptap;
-
-

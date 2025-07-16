@@ -6,13 +6,14 @@ export const testNode = () => Node.create({
   name: 'reactComponent',
 
   group: 'block',
-  content : "inline*",
-  atom: false,
+  content : "",
+  atom: true,
 
   addAttributes() {
     return {
       count: {
-        default: 0,
+        default: 10,
+      
       },
     }
   },
@@ -45,3 +46,5 @@ export const testNode = () => Node.create({
     return ReactNodeViewRenderer(componentView)
   },
 })
+
+//tiptap automagically does render your attritute and everything, provided its saved with current name both sides.
