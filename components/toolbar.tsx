@@ -328,12 +328,14 @@ export function Toolbar({ children }: ToolbarProps) {
                   id: `text-${Date.now()}`,
                   computedContent: `Curiosity fuels learning beyond boundaries`,
                   prompt: "Some prompt",
-                  sourceHash: "879a89367fad4899b61c9113c9d3532036992b7e16a4ea835e3184bdef5f1a75",
-                  dependencyHash: "879a89367fad4899b61c9113c9d3532036992b7e16a4ea835e3184bdef5f1a75",
-                  dependencyScope: 'document',
+                  sourceHash:
+                    "879a89367fad4899b61c9113c9d3532036992b7e16a4ea835e3184bdef5f1a75",
+                  dependencyHash:
+                    "879a89367fad4899b61c9113c9d3532036992b7e16a4ea835e3184bdef5f1a75",
+                  dependencyScope: "document",
                   type: "user-generated",
                   status: "idle",
-                  errorMessage: null
+                  errorMessage: null,
                 },
               },
             ];

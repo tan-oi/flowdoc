@@ -12,6 +12,15 @@ import { generateSchema } from "@/app/api/generate/route";
 import { applyAIOperation } from "@/lib/functions/applyOperations";
 import { Editor } from "@tiptap/react";
 
+interface BlockInfo {
+  position: {
+    to: number;
+    from: number;
+  };
+  content: string;
+}
+
+
 export function TextOverlayAi() {
   const [input, setInput] = useState<string>("");
   const [messages, setMessages] = useState<any[]>([]);
@@ -19,6 +28,7 @@ export function TextOverlayAi() {
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const positionsRef = useRef(new Map());
+  const blocksRef = useRef(new Map<string, BlockInfo>());
   const { submit, object, isLoading, error } = useObject({
     api: "/api/generate",
     schema: generateSchema,
@@ -32,29 +42,15 @@ export function TextOverlayAi() {
           content: result.object?.content,
         },
       ]);
-      hideInput();``
+      hideInput();
 
-      // if (editor && typeof docsPos === "number") {
-      //   queueMicrotask(() => {
-      //     editor.view.dispatch(
-      //       editor.state.tr.setMeta("createDiff", {
-      //         from: docsPos,
-      //         to: docsPos,
-      //         payload: {
-      //           changePayload: result.object?.content,
-      //           originalPayload: null,
-      //         },
-      //         type: "insert",
-      //       })
-      //     );
-      //   });
-      // }
+     
 
       applyAIOperation(
         editor as Editor,
         result?.object,
         docsPos as number,
-        positionsRef
+        blocksRef
       );
     },
   });
@@ -118,11 +114,12 @@ export function TextOverlayAi() {
   const handleSubmit = () => {
     if (!input.trim() || isLoading) return;
 
-    const { context, positionByIds } = getState(editor?.state.doc);
+    const { context, blocksByIds } = getState(editor?.state.doc);
     console.log(context);
     const userPrompt = `USER QUERY : ${input}`;
     const senMessages = context + userPrompt;
-    positionsRef.current = positionByIds;
+    // positionsRef.current = blocksByIds;
+    blocksRef.current = blocksByIds;
     const newUserMessage = {
       role: "user" as const,
       content: senMessages,

@@ -26,8 +26,7 @@ import UniqueID from "@tiptap/extension-unique-id";
 import { customAlphabet } from "nanoid";
 import { TextNode } from "@/extensions/text-node";
 import { useEffect } from "react";
-import { useDebouncedEditorSync } from "@/hooks/useDebounceEditorSync";
-import { useUpdateTimer } from "@/hooks/useUpdateTimer";
+
 import { setupLlmOrchestrator } from "@/lib/services/llmOrchestrator";
 
 const Tiptap = ({ id, data }: { id: string; data: object | null }) => {

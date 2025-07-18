@@ -13,8 +13,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--si
-  debar-primary);
+  --color-sidebar-primary: var(--si debar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
@@ -122,46 +121,55 @@
   }
 }
 
-/* 
-.ProseMirror {
-  @apply bg-transparent text-foreground;
-  outline: none !important;
-  border: none !important;
+@layer components {
+  .status-dot-container {
+    @apply relative w-2 h-2;
+  }
+  
+  .status-dot {
+    @apply w-2 h-2 rounded-full shadow-sm;
+  }
+  
+  .status-dot-green {
+    @apply bg-green-500;
+  }
+  
+  .status-dot-red {
+    @apply bg-red-500;
+  }
+  
+  .status-dot-error {
+    @apply bg-red-600;
+  }
+  
+  .status-ripple {
+    @apply absolute inset-0 rounded-full border-2;
+    animation: ripple 2s infinite ease-out;
+  }
+  
+  .status-ripple-green {
+    @apply border-green-400;
+  }
+  
+  .status-ripple-red {
+    @apply border-red-400;
+  }
+  
+  .status-ripple:nth-child(2) { animation-delay: 0.5s; }
+  .status-ripple:nth-child(3) { animation-delay: 1s; }
+  .status-ripple:nth-child(4) { animation-delay: 1.5s; }
 }
 
-.ProseMirror p {
-  @apply text-foreground;
+@keyframes ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
 }
-
-.ProseMirror h1, .ProseMirror h2, .ProseMirror h3, .ProseMirror h4, .ProseMirror h5, .ProseMirror h6 {
-  @apply text-foreground;
-}
-
-.ProseMirror h1{
-  font-size: 2rem; 
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.ProseMirror h2{
-  font-size: 1.7rem; 
-  font-weight: 700;
-  line-height: 1.2;
-}
-.ProseMirror h3{
-  font-size: 1.5rem; 
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.ProseMirror pre {
-  @apply bg-gray-600 text-white p-3 rounded font-mono text-sm;
-}
-
-.ProseMirror blockquote {
-  @apply border-l-[2px] border-gray-400 my-2 pl-2
-}
- */
 
 .tiptap p.is-editor-empty:first-child::before {
   color: #adb5bd;
@@ -198,13 +206,6 @@
   margin: 10px 0;
 }
 
-.sexo {
-  color: red;
-}
-
-.highlight {
-  background-color: yellow;
-}
 
 .insert {
   background-color: #186328;
@@ -222,7 +223,8 @@
   padding: 2px;
 }
 
-.react-component,.reactive-text-component {
+.react-component,
+.reactive-text-component {
   cursor: pointer;
   background-color: var(--purple-light);
   border: 2px solid var(--purple);
@@ -231,12 +233,16 @@
   position: relative;
 }
 
-/* Hide placeholder when overlay or diff widget is active */
+
 .ProseMirror.ai-overlay-active .tiptap p.is-editor-empty:first-child::before,
 .ProseMirror.ai-overlay-active .tiptap h1.is-editor-empty:first-child::before,
 .ProseMirror.ai-overlay-active .tiptap p.is-empty::before,
-.ProseMirror:has(.widget-container) .tiptap p.is-editor-empty:first-child::before,
-.ProseMirror:has(.widget-container) .tiptap h1.is-editor-empty:first-child::before,
+.ProseMirror:has(.widget-container)
+  .tiptap
+  p.is-editor-empty:first-child::before,
+.ProseMirror:has(.widget-container)
+  .tiptap
+  h1.is-editor-empty:first-child::before,
 .ProseMirror:has(.widget-container) .tiptap p.is-empty::before {
   display: none !important;
 }
@@ -254,8 +260,8 @@
   font-size: 1.05rem;
   line-height: 1.6;
   z-index: 2;
-  box-shadow: 0 2px 8px 0 rgba(34,197,94,0.08);
-  gap : 10px;
+  box-shadow: 0 2px 8px 0 rgba(34, 197, 94, 0.08);
+  gap: 10px;
 }
 
 .widget-container {
@@ -263,9 +269,9 @@
   position: relative;
   background: #154f15;
   color: #fff;
-  
+
   border-radius: 6px;
-  box-shadow: 0 2px 8px 0 rgba(34,197,94,0.08);
+  box-shadow: 0 2px 8px 0 rgba(34, 197, 94, 0.08);
   padding: 18px 18px 18px 20px;
   margin: 8px 0;
   pointer-events: auto;
@@ -277,10 +283,10 @@
   z-index: 2;
 }
 
-.inplace-change{
+.inplace-change {
   background: transparent;
-  padding : 0px;
-  margin : 0px;
+  padding: 0px;
+  margin: 0px;
   border-radius: 0px;
   box-shadow: none;
 }
@@ -288,7 +294,7 @@
 .widget-container:focus,
 .widget-container:active {
   outline: none;
-  box-shadow: 0 2px 8px 0 rgba(34,197,94,0.12);
+  box-shadow: 0 2px 8px 0 rgba(34, 197, 94, 0.12);
 }
 
 .diff-buttons {
@@ -300,7 +306,8 @@
   z-index: 3;
 }
 
-.accept-btn, .reject-btn {
+.accept-btn,
+.reject-btn {
   padding: 4px 14px;
   border-radius: 4px;
   cursor: pointer;
@@ -308,7 +315,7 @@
   font-weight: 600;
   transition: all 0.2s;
   border: none;
-  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.04);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
 }
 .accept-btn {
   background: #22c55e;
@@ -332,68 +339,39 @@
   margin-bottom: 0;
 }
 
-.old-overlay-content{
+.old-overlay-content {
   background-color: #dc2626;
 }
 
 .new-overlay-content {
-  background-color:#16a34a;
+  background-color: #16a34a;
 }
 
-/* Remove selection highlight when widget is present */
+
 .ProseMirror:has(.widget-container) .ProseMirror-selectedtext {
   background: transparent !important;
 }
-
-/* Remove any outline or border that causes the cursor to expand */
 .widget-container:focus-visible {
   outline: none !important;
   border: none !important;
 }
 
-
-/* src/components/ReactiveTextNodeView.css */
 .reactive-text-node-wrapper {
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin: 10px 0;
+  border: 0.2px solid #b8b1b1;
   border-radius: 4px;
-  background-color: #f9f9f9;
-  position: relative; /* For data-drag-handle styling */
+  padding-block: 4px;
+  padding-inline: 6px;
+  position: relative;
+  margin-bottom: 12px;
 }
-.reactive-text-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 0.9em;
-  color: #666;
+.generated-content-html > p {
+  margin: 0;
 }
-.reactive-text-prompt-label {
-  font-weight: bold;
-  margin-right: 5px;
-}
-.reactive-text-prompt-value {
-  flex-grow: 1;
-  font-style: italic;
-}
-.reactive-text-update-button {
-  padding: 4px 8px;
-  font-size: 0.8em;
-  cursor: pointer;
-  border: 1px solid #aaa;
-  border-radius: 3px;
-  background-color: #eee;
-}
-.reactive-text-update-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+
+
 .reactive-text-content {
   min-height: 40px;
-  background-color: #fff;
-  border: 1px dashed #ddd;
-  padding: 8px;
-  border-radius: 3px;
+  padding-block-end: 1rem;
 }
 .status-indicator {
   display: flex;
@@ -402,17 +380,9 @@
   color: #555;
   font-style: italic;
 }
-.status-indicator.computing { color: #007bff; }
-.status-indicator.error { color: #dc3545; }
-.spinner {
-  animation: spin 1s linear infinite;
-  margin-right: 5px;
+.status-indicator.computing {
+  color: #007bff;
 }
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-/* Styling for drag handle (ProseMirror's default) */
-.ProseMirror-selectednode .reactive-text-node-wrapper {
-  outline: 2px solid #68BCEB;
+.status-indicator.error {
+  color: #dc3545;
 }

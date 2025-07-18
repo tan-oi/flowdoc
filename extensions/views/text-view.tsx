@@ -1,85 +1,100 @@
-// import { Node } from "@tiptap/pm/model";
-// import { Editor, NodeViewContent, NodeViewWrapper } from "@tiptap/react";
-
-// interface NodeViewProps {
-//   node: Node;
-//   editor: Editor;
-//   getPos: () => number | undefined;
-
-//   updateAttributes: (attributes: Record<string, any>) => void;
-//   deleteNode: () => void;
-// }
-
-// export function TextView({
-//   node,
-//   editor,
-//   getPos,
-//   updateAttributes,
-//   deleteNode,
-// }: NodeViewProps) {
-//   return (
-//     <NodeViewWrapper className="reactive-text-component">
-//       <div>
-//         {node.attrs.generatedContent}
-//       </div>
-//     </NodeViewWrapper>
-//   );
-// }// src/components/ReactiveTextNodeView.jsx
-
-import React from 'react';
-import { NodeViewWrapper, Editor, NodeViewProps } from '@tiptap/react';
-import { forceNodeReevaluation } from '@/lib/services/llmOrchestrator';
+import React from "react";
+import { NodeViewWrapper, Editor, NodeViewProps } from "@tiptap/react";
+import { forceNodeReevaluation } from "@/lib/services/llmOrchestrator";
+import { Button } from "@/components/ui/button";
 
 export const TextView = (props: NodeViewProps) => {
   const { node, getPos, editor } = props;
   const { prompt, computedContent, status, errorMessage } = node.attrs;
   console.log(status);
-  const handleManualUpdate = () => {
-    if (editor && getPos) {
-      const pos = getPos(); // Get the current position of this node in the editor
-      if (typeof pos === 'number') { // Ensure pos is a valid number
-        forceNodeReevaluation(editor, pos); // Trigger re-evaluation via orchestrator
-      }
-    }
-  };
+
+  // const handleManualUpdate = () => {
+  //   if (editor && getPos) {
+  //     const pos = getPos();
+  //     if (typeof pos === "number") {
+  //       forceNodeReevaluation(editor, pos);
+  //     }
+  //   }
+  // };
 
   return (
-    // NodeViewWrapper is crucial for proper integration with Tiptap/ProseMirror
-    // It provides features like drag handles and correct selection behavior.
-    <NodeViewWrapper className="reactive-text-node-wrapper" draggable="true" data-drag-handle>
-      <div className="reactive-text-header" contentEditable={false}>
-        <span className="reactive-text-prompt-label">Prompt:</span>
-        <span className="reactive-text-prompt-value">
-          {prompt || 'No prompt set.'}
-        </span>
-        <button
-          onClick={handleManualUpdate}
-          disabled={status === 'computing'}
-          className="reactive-text-update-button"
-        >
-          {status === 'computing' ? 'Updating...' : 'Update Manually'}
-        </button>
+    <NodeViewWrapper
+      className="reactive-text-node-wrapper"
+      draggable="true"
+      data-drag-handle
+    >
+      <div className="flex justify-end items-center mb-[1px] gap-1">
+        <div className="status-dot-container">
+          <div
+            className={`status-dot ${
+              status === "computing"
+                ? "status-dot-red"
+                : status === "error"
+                ? "status-dot-error"
+                : "status-dot-green"
+            }`}
+          />
+
+          {(status === "computing" || status === "idle") && (
+            <>
+              <div
+                className={`status-ripple ${
+                  status === "computing"
+                    ? "status-ripple-red"
+                    : "status-ripple-green"
+                }`}
+              />
+              <div
+                className={`status-ripple ${
+                  status === "computing"
+                    ? "status-ripple-red"
+                    : "status-ripple-green"
+                }`}
+              />
+              <div
+                className={`status-ripple ${
+                  status === "computing"
+                    ? "status-ripple-red"
+                    : "status-ripple-green"
+                }`}
+              />
+              <div
+                className={`status-ripple ${
+                  status === "computing"
+                    ? "status-ripple-red"
+                    : "status-ripple-green"
+                }`}
+              />
+            </>
+          )}
+        </div>
+
+        <Button className="px-2" size={"sm"} variant={"ghost"} onClick={() => console.log("clikk")}>Edit</Button>
       </div>
 
       <div className="reactive-text-content">
-        {status === 'computing' && (
-          <div className="status-indicator computing">
-            <span className="spinner">🔄</span> Generating content...
-          </div>
+        {status === "error" && (
+          <div
+            className="status-indicator error"
+            dangerouslySetInnerHTML={{
+              __html:
+                computedContent ||
+                `<p style=\"color: red;\">Error: ${
+                  errorMessage || "Failed to generate content."
+                }</p>`,
+            }}
+          ></div>
         )}
-        {status === 'error' && (
-          // Display error message directly using dangerouslySetInnerHTML
-          <div className="status-indicator error" dangerouslySetInnerHTML={{ __html: computedContent || `<p style=\"color: red;\">Error: ${errorMessage || 'Failed to generate content.'}</p>` }}>
-          </div>
-        )}
-        {status === 'idle' && (
-          // *** Use dangerouslySetInnerHTML for HTML content ***
-          <div className="generated-content-html text-black" dangerouslySetInnerHTML={{ __html: computedContent || '<p>Generated content will appear here.</p>' }}>
-          </div>
+        {(status === "idle" || status === "computing") && (
+          <div
+            className="generated-content-html"
+            dangerouslySetInnerHTML={{
+              __html:
+                computedContent || "<p>Generated content will appear here.</p>",
+            }}
+          ></div>
         )}
       </div>
     </NodeViewWrapper>
   );
 };
-
-
