@@ -1,11 +1,11 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import type { Command } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { TextView } from "./views/text-view";
+import { ChartView } from "./views/chart-view";
 
-interface InsertTextNodeOptions {
+interface InsertChartNodeOptions {
   id?: string;
-  computedContent?: string;
+  computedContent?: [];
   prompt?: string;
   sourceHash?: string;
   dependencyHash?: string;
@@ -18,14 +18,14 @@ interface InsertTextNodeOptions {
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
-    reactiveTextBlock: {
-      insertTextNode: (options?: InsertTextNodeOptions) => ReturnType;
+    reactiveChartBlock: {
+      insertChartNode: (options?: InsertChartNodeOptions) => ReturnType;
     };
   }
 }
 
-export const TextNode = Node.create({
-  name: "TextBlock",
+export const ChartNode = Node.create({
+  name: "ChartBlock",
   group: "block",
   content: "",
   atom: true,
@@ -35,52 +35,49 @@ export const TextNode = Node.create({
       id: {
         default: "",
       },
-      computedContent: {
-        default: "",
-      },
       prompt: {
         default: "",
       },
+      status: {
+        default: "null",
+      },
       sourceHash: {
-        default: "",
+        default: null,
       },
       dependencyHash: {
-        default: "",
+        default: null,
       },
       dependencyScope: {
         default: "document",
       },
       type: {
-        default: "",
-      },
-      status: {
-        default: "idle"
+        default: "bar",
       },
       errorMessage: {
-        default: null
+        default: null,
       },
       isReactive : {
         default : false
-      }
+      },
+      computedContent: [],
     };
   },
 
   parseHTML() {
     return [
       {
-        tag: "reactive-text-component",
+        tag: "reactive-chart-component",
       },
     ];
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ["reactive-text-component", mergeAttributes(HTMLAttributes)];
+    return ["reactive-chart-component", mergeAttributes(HTMLAttributes)];
   },
-
   addCommands() {
     return {
-      insertTextNode:
-        (options: InsertTextNodeOptions = {}): Command =>
+      insertChartNode:
+        (options: InsertChartNodeOptions = {}): Command =>
         ({ commands }) => {
           const {
             id,
@@ -89,10 +86,10 @@ export const TextNode = Node.create({
             sourceHash = "",
             dependencyHash = "",
             dependencyScope = "document",
-            type = "",
+            type = "Bar",
             status = "idle",
             errorMessage = null,
-            isReactive = true
+            isReactive = false
           } = options;
 
           return commands.insertContent({
@@ -107,7 +104,7 @@ export const TextNode = Node.create({
               type,
               status,
               errorMessage,
-              isReactive
+              isReactive 
             },
           });
         },
@@ -115,6 +112,6 @@ export const TextNode = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(TextView);
+    return ReactNodeViewRenderer(ChartView);
   },
 });

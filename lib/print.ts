@@ -22,7 +22,7 @@ export function getState(doc: any): GetStateResult {
   doc.descendants(
     (node: ProseMirrorNode, pos: number, parent?: ProseMirrorNode) => {
       if (!node.type.isBlock) return;
-
+      console.log(node);
       if (node.type.name === "paragraph" && parent?.type?.name === "listItem")
         return;
 
@@ -70,7 +70,7 @@ export function getState(doc: any): GetStateResult {
     }
   );
 
-  console.log(blocksByIds);
+ 
 
   return { context, blocksByIds };
 }

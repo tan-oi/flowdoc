@@ -7,7 +7,6 @@ import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 
 import { DiffExtension, setCurrentEditor } from "@/extensions/diff";
-import { diffWords } from "diff";
 import { testNode } from "@/extensions/test";
 import Placeholder from "@tiptap/extension-placeholder";
 import {
@@ -28,8 +27,9 @@ import { TextNode } from "@/extensions/text-node";
 import { useEffect } from "react";
 
 import { setupLlmOrchestrator } from "@/lib/services/llmOrchestrator";
+import { ChartNode } from "@/extensions/chart-node";
 
-const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
+const Tiptap = ({ id, data }: { id: string; data: any }) => {
   const { triggerNavigation, docId } = useEditorId(id);
 
   const nanoid = customAlphabet(
@@ -70,6 +70,7 @@ const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
       }),
       Underline,
       TextNode,
+      ChartNode,
       DiffExtension,
       testNode(),
       UniqueID.configure({
@@ -131,12 +132,12 @@ const Tiptap = ({ id, data }: { id: string; data: object | null }) => {
 
   useEffect(() => {
     if (!editor) return;
-    console.log('yes');
+    console.log("yes");
+
     const cleanup = setupLlmOrchestrator(editor);
     return cleanup;
   }, [editor]);
 
- 
   if (!editor) return null;
   return (
     <>

@@ -9,7 +9,9 @@ interface Result {
   targetBlock?: string | undefined;
   replaceType?: "normal" | "inplace" | undefined | "insertReactive";
   dependencyScope?: string[];
-  prompt? : string
+  prompt?: string;
+  chartType?: "bar" | "pie";
+  isReative?: boolean;
 }
 
 export function applyAIOperation(
@@ -39,23 +41,49 @@ export function applyAIOperation(
     const from = range?.from ?? docsPos;
     const to = range?.to ?? docsPos;
     console.log(from, " ", to);
+    console.log(result.chartType);
+
     switch (operationType) {
       case "insert":
         const insertAt = position === "after" ? to : from;
-
-        editor.view.dispatch(
-          editor.state.tr.setMeta("createDiff", {
-            // from: position === "after" && from !== 0 ? to : from,
-            // to: position === "after" && from !== 0 ? to : from,
-            from: insertAt,
-            to: insertAt,
-            payload: {
-              changePayload: content,
-              originalPayload: null,
+        if (result.chartType) {
+          const nanoid = customAlphabet(
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+            7
+          );
+          const toBeAdded: Array<{ type: string; attrs?: any }> = [
+            {
+              type: "ChartBlock",
+              attrs: {
+                id: nanoid(),
+                computedContent: result.content,
+                prompt: prompt ? prompt : "None",
+                type: result.chartType,
+                isReactive: false,
+              },
             },
-            type: "insert",
-          })
-        );
+          ];
+          toBeAdded.push({
+            type: "paragraph",
+            attrs: {},
+          });
+
+          editor.chain().focus().insertContentAt(insertAt, toBeAdded).run();
+        } else {
+          editor.view.dispatch(
+            editor.state.tr.setMeta("createDiff", {
+              // from: position === "after" && from !== 0 ? to : from,
+              // to: position === "after" && from !== 0 ? to : from,
+              from: insertAt,
+              to: insertAt,
+              payload: {
+                changePayload: content,
+                originalPayload: null,
+              },
+              type: "insert",
+            })
+          );
+        }
         break;
 
       case "insertReactive":
@@ -69,7 +97,7 @@ export function applyAIOperation(
           if (dependencyScope[0] === "document") {
             let documentContent = "";
             editor.state.doc.descendants((node, pos) => {
-              if (node.type.name !== "ReactiveTextBlock" && node.isTextblock) {
+              if (!node.attrs.isReactive && node.isTextblock) {
                 const c = node.textContent.trim();
                 if (c !== "") {
                   documentContent += c + "\n";
@@ -87,20 +115,24 @@ export function applyAIOperation(
 
           const sourceHash = sha256(result.content);
           const dependencyHash = sha256(contentToBeHashed);
-
+          console.log(dependencyHash, "in apply");
+          const blockType = result.chartType
+            ? "ChartBlock"
+            : "TextBlock";
           const toBeAdded: Array<{ type: string; attrs?: any }> = [
             {
-              type: "ReactiveTextBlock",
+              type: blockType,
               attrs: {
                 id: nanoid(),
                 computedContent: result.content,
-                prompt : prompt ? prompt : "None",
+                prompt: prompt ? prompt : "None",
                 sourceHash,
                 dependencyHash,
                 dependencyScope,
-                type: "reactive",
+                type: result.chartType || "text",
                 status: "idle",
                 errorMessage: null,
+                isReactive: true,
               },
             },
           ];

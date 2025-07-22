@@ -4,6 +4,7 @@ import { Editor } from "@tiptap/react";
 import { Node as ProseMirrorNode } from "prosemirror-model";
 
 import debounce from "lodash.debounce";
+import { type } from "os";
 
 interface LlmRequest {
   nodePos: number;
@@ -11,6 +12,8 @@ interface LlmRequest {
   prompt: string;
   dependentContent: string;
   currentContentHash: string;
+  computedContent: string;
+  type: "text" | "bar" | "pie";
 }
 
 interface ReactiveTextAttrs {
@@ -19,29 +22,34 @@ interface ReactiveTextAttrs {
   dependencyHash: string;
   status: "idle" | "computing" | "error";
   dependencyScope: string[];
-  computedContent?: string;
+  computedContent: string;
   errorMessage?: string;
+  type: "text" | "bar" | "pie";
 }
 
 const llmRequestQueue: LlmRequest[] = [];
 let isProcessingQueue = false;
 
-
 let debouncedScanRef: ReturnType<typeof debounce> | null = null;
 
 const callLlmApi = async (
   prompt: string,
-  dependentContent: string
+  dependentContent: string,
+  computedContent: string,
+  type: "text" | "bar" | "pie"
 ): Promise<string> => {
- 
   try {
+    console.log(computedContent);
     const res = await fetch("/api/reactive", {
       method: "POST",
       headers: {
         "Content-type": "application/json",
       },
-      body : JSON.stringify({
-        message : `Based on this document content:\n\n${dependentContent}\n\ User query: ${prompt}`
+      body: JSON.stringify({
+        message: `Based on this document content:\n\n${dependentContent}\n\n 
+        Desired format : ${computedContent} & Desired type : ${type} \n\n
+        User query: ${prompt}`,
+        type
       }),
     });
     const { htmlContent } = await res.json();
@@ -72,8 +80,15 @@ const processQueue = async (editor: Editor): Promise<void> => {
   );
 
   const batchPromises = currentBatch.map(async (request) => {
-    const { nodePos, nodeType, prompt, dependentContent, currentContentHash } =
-      request;
+    const {
+      nodePos,
+      nodeType,
+      prompt,
+      dependentContent,
+      currentContentHash,
+      computedContent,
+      type,
+    } = request;
 
     try {
       const currentNode = editor.state.doc.nodeAt(nodePos);
@@ -84,7 +99,12 @@ const processQueue = async (editor: Editor): Promise<void> => {
         return;
       }
 
-      const generatedHtml = await callLlmApi(prompt, dependentContent);
+      const generatedHtml = await callLlmApi(
+        prompt,
+        dependentContent,
+        computedContent,
+        type
+      );
 
       const sanitizedHtml = DOMPurify.sanitize(generatedHtml, {
         USE_PROFILES: { html: true },
@@ -161,23 +181,34 @@ const triggerReevaluationScan = (editor: Editor): void => {
   const nodesToQueue: LlmRequest[] = [];
 
   doc.descendants((node: ProseMirrorNode, pos: number) => {
-    if (node.type.name === "ReactiveTextBlock") {
+    if (node.attrs.isReactive) {
+      console.log("works");
       const attrs = node.attrs as ReactiveTextAttrs;
-      const { prompt, sourceHash, dependencyHash, status, dependencyScope } =
-        attrs;
+      const {
+        prompt,
+        sourceHash,
+        dependencyHash,
+        status,
+        dependencyScope,
+        computedContent,
+        type,
+      } = attrs;
+      console.log(dependencyHash, "in llmorc");
 
       let dependentContent = "";
       let dependencyFound = true;
 
       if (dependencyScope[0] === "document") {
         doc.descendants((n: ProseMirrorNode, p: number) => {
-          if (n.type.name !== "ReactiveTextBlock" && n.isTextblock) {
+          if (!n.attrs.isReactive && n.isTextblock) {
             const content = n.textContent.trim();
             if (content !== "") {
+              console.log(content);
               dependentContent += content + "\n";
             }
           }
         });
+        console.log(dependentContent);
       } else if (Array.isArray(dependencyScope)) {
         const contents: string[] = [];
         dependencyScope.forEach((blockId: string) => {
@@ -208,7 +239,7 @@ const triggerReevaluationScan = (editor: Editor): void => {
       }
 
       const currentContentHash = sha256(dependentContent);
-
+      console.log(dependentContent);
       if (
         ((currentContentHash !== dependencyHash && dependencyFound) ||
           status === "error" ||
@@ -228,6 +259,8 @@ const triggerReevaluationScan = (editor: Editor): void => {
           prompt,
           dependentContent,
           currentContentHash,
+          computedContent,
+          type,
         });
 
         editor.view.dispatch(
@@ -255,7 +288,7 @@ const cleanupDebounce = (): void => {
 
 export const setupLlmOrchestrator = (
   editor: Editor,
-  debounceDelay: number = 5000 
+  debounceDelay: number = 5000
 ): (() => void) => {
   if (!editor) {
     console.error(
@@ -270,7 +303,7 @@ export const setupLlmOrchestrator = (
     {
       leading: false,
       trailing: true,
-      maxWait: debounceDelay * 3, 
+      maxWait: debounceDelay * 3,
     }
   );
 
@@ -322,11 +355,9 @@ export const forceNodeReevaluation = (editor: Editor, pos: number): void => {
       })
     );
 
-  
     triggerReevaluationScan(editor);
   }
 };
-
 
 export const triggerImmediateScan = (editor: Editor): void => {
   if (debouncedScanRef) {
@@ -334,5 +365,4 @@ export const triggerImmediateScan = (editor: Editor): void => {
   }
 };
 
-
-//todo: add max retries, make queue better, modularize as well. also add a way such that we can do before and after block updates and not just specifics.
+//todo: add max retries, make queue better, modularize as well. also add a way such that we can do before and after block updates and not just specifics. probably add a check to make llm calls after a specific number of word changes.
