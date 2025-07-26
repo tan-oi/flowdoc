@@ -1,8 +1,6 @@
-
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
+  // output   = "../lib/generated/prisma"
 }
 
 datasource db {
@@ -11,9 +9,8 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
 model User {
-  id            String    @id
+  id            String     @id
   name          String
   email         String
   emailVerified Boolean
@@ -22,7 +19,7 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
-  Document Document[]
+  Document      Document[]
 
   @@unique([email])
   @@map("user")
@@ -73,14 +70,44 @@ model Verification {
   @@map("verification")
 }
 
+enum DocumentType {
+  temp
+  perma
+}
+
 model Document {
-  id        String   @id 
+  id        String   @id @unique @default(uuid())
   title     String   @default("Untitled")
   content   Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   userId    String
+  // accepted Boolean @default(true)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  type DocumentType @default(perma)
+
+  history History[]
+
   @@map("document")
+}
+
+model History {
+  id      String @id @default(uuid())
+  prompt  String
+  content String
+
+  createdAt DateTime @default(now())
+
+  docId    String
+  type     HistoryType @default(text)
+  document Document    @relation(fields: [docId], references: [id], onDelete: Cascade)
+
+  @@map("history")
+}
+
+enum HistoryType {
+  text
+  chart
+  reactive
 }

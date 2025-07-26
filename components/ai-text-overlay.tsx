@@ -8,9 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2 } from "lucide-react";
 import { experimental_useObject as useObject, useChat } from "@ai-sdk/react";
 import { getState } from "@/lib/print";
-import { generateSchema } from "@/app/api/generate/route";
+
 import { applyAIOperation } from "@/lib/functions/applyOperations";
 import { Editor } from "@tiptap/react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
+import { useHistoryState } from "@/store/useHistoryStore";
+import { generateSchema } from "@/lib/schema";
 
 interface BlockInfo {
   position: {
@@ -20,20 +24,35 @@ interface BlockInfo {
   content: string;
 }
 
-
 export function TextOverlayAi() {
+  const qc = useQueryClient();
+  const id = useSearchParams().get("id");
   const [input, setInput] = useState<string>("");
   const [messages, setMessages] = useState<any[]>([]);
   const { show, position, editor, docsPos, hideInput } = useOverlayInputStore();
+  // const docId = useHistoryState(s => s.activeDocId)
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const positionsRef = useRef(new Map());
   const blocksRef = useRef(new Map<string, BlockInfo>());
+  const docId = useHistoryState((s) => s.activeDocId);
+  const addEntry = useHistoryState((s) => s.addBatchedEntry);
   const { submit, object, isLoading, error } = useObject({
     api: "/api/generate",
     schema: generateSchema,
     onFinish: (result) => {
       console.log(result.object);
+
+      addEntry(docId as string, {
+        prompt: input,
+        content: result.object?.content as string,
+        createdAt: new Date().toISOString(),
+        type: result.object?.chartType
+          ? "chart"
+          : result.object?.operation === "insertReactive" ||
+            result.object?.dependencyScope
+          ? "reactive"
+          : "text",
+      });
 
       setMessages((prev) => [
         ...prev,
@@ -42,13 +61,12 @@ export function TextOverlayAi() {
           content: result.object?.content,
         },
       ]);
+      setInput("");
       hideInput();
-
-     
 
       applyAIOperation(
         editor as Editor,
-        result?.object,
+        result?.object as any,
         docsPos as number,
         blocksRef
       );
@@ -129,7 +147,7 @@ export function TextOverlayAi() {
     setMessages(allMessages);
 
     submit({ messages: allMessages });
-    setInput("");
+    // setInput("");
   };
 
   if (!show) return null;
@@ -191,6 +209,17 @@ export function TextOverlayAi() {
               <Send className="size-4" />
             </Button>
           </div>
+          <p>{docId}</p>
+          <button
+            onClick={() => {
+              const data = useHistoryState
+                .getState()
+                .getBatchedEntries(id as string);
+              console.log(data);
+            }}
+          >
+            click
+          </button>
         </div>
       </div>
     ),

@@ -2,7 +2,7 @@ import DOMPurify from "dompurify";
 import { memo } from "react";
 
 
- const SANITIZE_CONFIG = {
+export const SANITIZE_CONFIG = {
     ALLOWED_TAGS: [
       "p", "br", "strong", "em", "b", "i", "u",
       "h1", "h2", "h3", "h4", "h5", "h6",
@@ -13,12 +13,11 @@ import { memo } from "react";
     ALLOWED_URI_REGEXP: /^https?:\/\/|^mailto:|^tel:/,
   }
 
-export const SafeHtml = memo(({ html }: { html: string }) => {
+export const SafeHtml = memo(({ html,className }: { html: string, className? :string }) => {
     const sanitizedHtml = DOMPurify.sanitize(html, SANITIZE_CONFIG);
   
     return (
-      <div
-        className="max-w-none"
+      <div className={className}
         dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
       />
     );

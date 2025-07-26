@@ -36,7 +36,7 @@ export const useEditorId = (id: string) => {
    
     if (isNewSession && !hasNavigated.current) {
       hasNavigated.current = true;
-      router.replace(`/editor/${id}`);
+      router.replace(`/editor?id=${id}`,{scroll : false});
     }
   }, [isNewSession, id, router]);
 

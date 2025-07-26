@@ -2,39 +2,53 @@
 
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  List,
-  ListOrdered,
-  Quote,
-  Code,
-  Link,
-  ImageIcon,
-  ChevronDown,
-  Code2,
-  ListOrderedIcon,
-  LucideQuote,
-  LucideItalic,
-} from "lucide-react";
-import { Separator } from "./ui/separator";
+import { Loader2, SaveIcon } from "lucide-react";
 
 import { useEditorContext } from "./editor-provider";
 import { Toggle } from "./ui/toggle";
 import { getState } from "@/lib/print";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
+import { useHistoryState } from "@/store/useHistoryStore";
 
 interface ToolbarProps {
   children?: React.ReactNode;
+  id: string;
 }
 
-export function Toolbar({ children }: ToolbarProps) {
+export function Toolbar({ children, id }: ToolbarProps) {
   const { editor } = useEditorContext();
+
+  const qc = useQueryClient();
+
   const [, forceUpdate] = useState({});
+
+  const { mutate: saveDocument, isPending: isSaving } = useMutation({
+    mutationFn: async (data: { id: any; entries: any; editorState: any }) => {
+      console.log(id);
+      const res = await fetch(`/api/doc/${data.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          history: data.entries,
+          docState: data.editorState,
+        }),
+      });
+      return res.json();
+    },
+    onSuccess(data, variables) {
+      console.log(data);
+      console.log(variables);
+      qc.setQueryData(["doc", "history", `${variables.id}`], (oldData) => [
+        ...(oldData || []),
+        ...variables.entries,
+      ]);
+
+      useHistoryState.getState().clearBatchedEntries(variables.id);
+    },
+  });
 
   useEffect(() => {
     if (!editor) return;
@@ -52,18 +66,29 @@ export function Toolbar({ children }: ToolbarProps) {
     };
   }, [editor]);
 
-  if (!editor) return null;
-  return (
-    <div className="flex items-center gap-2 border-b p-2">
-      <div className="flex items-center">
-        {children}
-        <Separator
-          orientation="vertical"
-          className="data-[orientation=vertical]:h-6"
-        />
-      </div>
+  const saveDocs = () => {
+    console.log("saved!");
+    console.log(id);
 
-      <div className="flex items-center gap-1">
+    const batchedEntries = useHistoryState.getState().getBatchedEntries(id);
+
+    if (batchedEntries.length === 0) return;
+    console.log(batchedEntries);
+
+    saveDocument({
+      id,
+      entries: batchedEntries,
+      editorState: editor?.getJSON(),
+    });
+  };
+
+  if (!editor) return null;
+
+  return (
+    <div className="flex items-center justify-between gap-2 p-[8px] backdrop-blur-md border-b border-neutral-800">
+      <div className="flex items-center">{children}</div>
+
+      {/* <div className="flex items-center gap-1">
         <Toggle
           pressed={editor.isActive("bold")}
           onPressedChange={() => editor.chain().focus().toggleBold().run()}
@@ -362,6 +387,28 @@ export function Toolbar({ children }: ToolbarProps) {
         >
           reactive
         </Button>
+      </div> */}
+      <div className="flex items-center gap-2">
+        <Button
+          size={"sm"}
+          className="cursor-pointer"
+          onClick={saveDocs}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="animate-spin mr-2" />
+              Saving..
+            </>
+          ) : (
+            <>
+              Save
+              <SaveIcon />
+            </>
+          )}
+        </Button>
+
+        <div className="font-mono text-xs font-extralight"></div>
       </div>
     </div>
   );

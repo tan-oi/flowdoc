@@ -8,12 +8,15 @@ export default function EditorLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  console.log("--- LAYOUT re-rendering on the SERVER ---");
+
   return (
+  <>
     <SidebarProvider
       style={{
-        "--sidebar-width": "13rem",
+        "--sidebar-width": "12rem",
         "--sidebar-width-mobile": "20rem",
-      }}
+      } as React.CSSProperties}
     >
       <LeftSideBar />
       <TextOverlayAi />
@@ -23,5 +26,6 @@ export default function EditorLayout({
         </div>
       </SidebarInset>
     </SidebarProvider>
+  </>
   );
 }
