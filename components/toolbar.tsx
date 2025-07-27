@@ -45,7 +45,7 @@ export function Toolbar({ children, id }: ToolbarProps) {
         ...(oldData || []),
         ...variables.entries,
       ]);
-
+      
       useHistoryState.getState().clearBatchedEntries(variables.id);
     },
   });
@@ -85,7 +85,7 @@ export function Toolbar({ children, id }: ToolbarProps) {
   if (!editor) return null;
 
   return (
-    <div className="flex items-center justify-between gap-2 p-[8px] backdrop-blur-md border-b border-neutral-800">
+    <div className="flex items-center justify-between gap-2 p-[8px] backdrop-blur-md border-b border-neutral-800 bg-transparent">
       <div className="flex items-center">{children}</div>
 
       {/* <div className="flex items-center gap-1">

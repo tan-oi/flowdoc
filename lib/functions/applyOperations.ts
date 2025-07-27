@@ -11,7 +11,7 @@ interface Result {
   dependencyScope?: string[];
   prompt?: string;
   chartType?: "bar" | "pie";
-  isReative?: boolean;
+  isReactive?: boolean;
 }
 
 export function applyAIOperation(
@@ -41,7 +41,7 @@ export function applyAIOperation(
     const from = range?.from ?? docsPos;
     const to = range?.to ?? docsPos;
     console.log(from, " ", to);
-    console.log(result.chartType);
+  
 
     switch (operationType) {
       case "insert":
@@ -87,10 +87,10 @@ export function applyAIOperation(
         break;
 
       case "insertReactive":
+        console.log('why the fuck is this working?');
         const dependencyScope = result.dependencyScope;
         const nanoid = customAlphabet(
-          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-          7
+          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 7
         );
         let contentToBeHashed;
         if (dependencyScope) {

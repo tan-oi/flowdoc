@@ -46,9 +46,9 @@ const callLlmApi = async (
         "Content-type": "application/json",
       },
       body: JSON.stringify({
-        message: `Based on this document content:\n\n${dependentContent}\n\n 
-        Desired format : ${computedContent} & Desired type : ${type} \n\n
-        User query: ${prompt}`,
+        message: `Base content:\n\n${dependentContent}\n\n 
+       Desired type : ${type} \n\n
+        Task: ${prompt}`,
         type
       }),
     });

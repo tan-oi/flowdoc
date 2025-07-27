@@ -22,14 +22,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export const ChartView = (props: NodeViewProps) => {
   const { node } = props;
-  const { computedContent, status, errorMessage, type, isReactive } =
+  const { computedContent, status, errorMessage, type, isReactive, prompt } =
     node.attrs;
-  console.log(type);
+  console.log(type," ", isReactive);
   const renderContent = () => {
-    if (status === "computing") {
-      return <Skeleton className="h-[300px] w-full" />;
-    }
-
     if (status === "error") {
       return (
         <div className="text-red-500">
@@ -170,17 +166,69 @@ export const ChartView = (props: NodeViewProps) => {
 
   return (
     <NodeViewWrapper
-      className="reactive-chart-node-wrapper my-4"
+      className="reactive-chart-node-wrapper my-4 border border-px rounded-lg group px-6"
       draggable="true"
       data-drag-handle
     >
-      <div className="flex justify-end items-center mb-1 gap-1">
+      {/* <div className="flex justify-end items-center mb-1 gap-1">
         <Button className="px-2" size={"sm"} variant={"ghost"}>
           Edit
         </Button>
-      </div>
+      </div> */}
+      <div className="flex group-hover:justify-between justify-end py-2 items-center">
+        <span className="hidden group-hover:inline text-neutral-500">
+          {prompt}
+        </span>
+        {isReactive ? (
+          <>
+            <div className="status-dot-container">
+              <div
+                className={`status-dot ${
+                  status === "computing"
+                    ? "status-dot-red"
+                    : status === "error"
+                    ? "status-dot-error"
+                    : "status-dot-green"
+                }`}
+              />
 
-      <div className="reactive-chart-content p-4 border rounded-lg bg-transparent flex justify-center">
+              {(status === "computing" || status === "idle") && (
+                <>
+                  <div
+                    className={`status-ripple ${
+                      status === "computing"
+                        ? "status-ripple-red"
+                        : "status-ripple-green"
+                    }`}
+                  />
+                  <div
+                    className={`status-ripple ${
+                      status === "computing"
+                        ? "status-ripple-red"
+                        : "status-ripple-green"
+                    }`}
+                  />
+                  <div
+                    className={`status-ripple ${
+                      status === "computing"
+                        ? "status-ripple-red"
+                        : "status-ripple-green"
+                    }`}
+                  />
+                  <div
+                    className={`status-ripple ${
+                      status === "computing"
+                        ? "status-ripple-red"
+                        : "status-ripple-green"
+                    }`}
+                  />
+                </>
+              )}
+            </div>
+          </> 
+        ) : <></>}
+      </div>
+      <div className="reactive-chart-content p-4  bg-transparent flex justify-center">
         {renderContent()}
       </div>
     </NodeViewWrapper>

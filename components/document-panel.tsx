@@ -48,8 +48,8 @@ export function DocumentPanel({ id }: { id: string }) {
   return (
     <>
       <div className="flex flex-1 flex-col h-full border-l-px shadow-sm bg-card rounded-lg min-w-[300px] text-card-foreground py-2 px-1 border-r-card overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/50 scrollbar-track-transparent ">
-        <div className="py-1 px-1">
-          <Tabs className="w-full" defaultValue="history">
+        <div className="py-1 px-1 w-full h-full">
+          <Tabs className="w-full h-full" defaultValue="history">
             <TabsList className="w-full">
               <TabsTrigger
                 value="history"
@@ -66,13 +66,13 @@ export function DocumentPanel({ id }: { id: string }) {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="history">
+            <TabsContent className="w-full h-full" value="history">
               {totalHistory.length === 0 ? (
                 <>
-                  <div className="flex items-center justify-center">
-                    <p>
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-neutral-400">
                       {" "}
-                      Everytime you ask AI to do something it'll be stored here{" "}
+                      Ask, and reference, anytime {":)"}
                     </p>
                   </div>
                 </>
@@ -86,8 +86,8 @@ export function DocumentPanel({ id }: { id: string }) {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-[4px]">
-                            <Clock className="w-3 h-3 dark:text-emerald-600 text-emerald-400" />
-                            <p className="dark:text-emerald-600 text-emerald-400 text-xs font-mono">
+                            <Clock className="w-3 h-3 dark:text-[#faf8b5f0] text-emerald-400" />
+                            <p className="dark:text-[#faf8b5f0] text-emerald-400 text-xs font-mono">
                               {formatTimestamp(h.createdAt)}
                             </p>
                           </div>

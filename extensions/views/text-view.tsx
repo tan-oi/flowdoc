@@ -19,11 +19,19 @@ export const TextView = (props: NodeViewProps) => {
 
   return (
     <NodeViewWrapper
-      className="reactive-text-node-wrapper"
+      className="reactive-text-node-wrapper rounded-lg group"
       draggable="true"
       data-drag-handle
     >
-      <div className="flex justify-end items-center mb-[1px] gap-1">
+      <div className="flex group-hover:justify-between justify-end items-center mb-[1px] gap-1 mt-2 px-2">
+         {/* <Button className="px-2 opacity-0 hover:opacity-100" size={"sm"}
+        
+         variant={"ghost"} onClick={() => console.log("clikk")}>Edit</Button> */}
+
+         
+            <span className="text-neutral-500 hidden group-hover:inline m-0">{prompt}</span>
+        
+
         <div className="status-dot-container">
           <div
             className={`status-dot ${
@@ -69,7 +77,7 @@ export const TextView = (props: NodeViewProps) => {
           )}
         </div>
 
-        <Button className="px-2" size={"sm"} variant={"ghost"} onClick={() => console.log("clikk")}>Edit</Button>
+       
       </div>
 
       <div className="reactive-text-content">

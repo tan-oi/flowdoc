@@ -23,9 +23,9 @@ export async function GET(request: Request) {
     select: { 
       id: true, 
       title: true, 
-      updatedAt: true 
+      updatedAt : true,
     },
-    orderBy: { updatedAt: 'desc' },
+    orderBy: { updatedAt: "desc" },
     skip: offset,
     take: limit
   });
