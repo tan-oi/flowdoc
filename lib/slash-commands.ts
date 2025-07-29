@@ -10,6 +10,7 @@ import {
   CheckSquare,
   type LucideIcon,
   Pen,
+  StarsIcon,
 } from "lucide-react";
 import { createSuggestionsItems } from "@harshtalks/slash-tiptap";
 import { Editor } from "@tiptap/core";
@@ -24,7 +25,7 @@ export interface Command {
 
 export const suggestionItems = createSuggestionsItems([
   {
-    title: "Add using AI ",
+    title: "Add content",
     searchTerms: ["ai", "llm", "ml", "auto"],
     icon: Pen,
     command: ({ editor, range }) => {
@@ -36,7 +37,25 @@ export const suggestionItems = createSuggestionsItems([
       console.log(start);
       useOverlayInputStore
         .getState()
-        .showInput({ x: start.left, y: start.top }, editor);
+        .showInput({ x: start.left, y: start.top }, editor, 'static');
+    },
+  },
+  {
+    title : "Add live block",
+    searchTerms : ["live","auto","reactive","reupdate"],
+    icon : StarsIcon, 
+    command : ({
+      editor, range
+    }) => {
+      editor.chain().focus().deleteRange(range).run();
+
+      const { view } = editor;
+      const start = view.coordsAtPos(editor.state.selection.from);
+      console.log(editor.state.selection.from);
+      console.log(start);
+      useOverlayInputStore
+        .getState()
+        .showInput({ x: start.left, y: start.top }, editor, "reactive")
     },
   },
   {

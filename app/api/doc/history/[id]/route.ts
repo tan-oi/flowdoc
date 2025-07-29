@@ -6,23 +6,31 @@ import { NextResponse } from "next/server";
 export async function GET(req: Request, { params }: {
     params: Promise<{ id: string }>
 }) {
-    const { id } = await params;
+    try {
+        const { id } = await params;
 
-    const session = await auth.api.getSession({
-        headers: await headers()
-    })
+        const session = await auth.api.getSession({
+            headers: await headers()
+        })
+        
+        if (!session) {
+            return NextResponse.json({
+                error: "Unauthorized"
+            }, { status: 401 })
+        }
     
-    if (!session) {
+        const history = await prisma.history.findMany({
+            where: {
+                docId: id
+            }
+        })
+    
+        return NextResponse.json(history);
+    }
+    catch(err) {
         return NextResponse.json({
-            error: "Unauthorized"
-        }, { status: 401 })
+            
+        })
     }
 
-    const history = await prisma.history.findMany({
-        where: {
-            docId: id
-        }
-    })
-
-    return NextResponse.json(history);
 }

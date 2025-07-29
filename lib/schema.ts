@@ -28,36 +28,125 @@
 //       ),
 //       prompt : z.string().optional().describe("for insertReactive operations - give back the user query, its very important that you give back the query.")
 //   });
-import {z} from "zod"
-export const generateSchema = z.object({
-  content: z.string().describe("The content to insert or use as replacement. For charts, this will be a JSON string."),
-  targetBlock: z.string().describe("ID or name of the block to reference").optional(),
-  position: z
-    .enum(["before", "after", "replace"])
-    .describe("before/after for insert operations, replace for replace operations")
-    .optional(), // Make this optional since it's not needed when no targetBlock
+import { z } from "zod";
+export const generateSchema = z
+  .object({
+    content: z
+      .string()
+      .describe(
+        "The content to insert or use as replacement. For charts, this will be a JSON string."
+      ),
+    targetBlock: z
+      .string()
+      .describe("ID or name of the block to reference")
+      .optional(),
+    position: z
+      .enum(["before", "after", "replace"])
+      .describe(
+        "before/after for insert operations, replace for replace operations"
+      )
+      .optional(),
+    operation: z
+      .enum(["insert", "replace", "insertReactive"])
+      .describe(
+        "insert: add new content, replace: modify existing content, insertReactive: add new content with reactivity"
+      ),
+    replaceType: z
+      .enum(["normal", "inplace"])
+      .optional()
+      .describe(
+        "Only for replace operations - normal: replace entire block, inplace: modify within block structure"
+      ),
+    chartType: z
+      .enum(["bar", "pie"])
+      .optional()
+      .describe("Specify the type of chart to render."),
+    dependencyScope: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "If it is an insertReactive operations always always either add a array of dependency identifiers that the reactive text depends on. Can include specific block IDs or 'document' for whole document dependency"
+      ),
+    prompt: z
+      .string()
+      .describe(
+        "for every operations - give back the user query, its very important that you give back the query."
+      ),
+  })
+  .refine(
+    (data) => {
+      if (data.operation === "insertReactive") {
+        return (
+          data.dependencyScope && data.dependencyScope.length > 0 && data.prompt
+        );
+      }
+      return true;
+    },
+    {
+      message:
+        "insertReactive operations require both dependencyScope and prompt fields",
+    }
+  );
+
+export const staticBlockSchema = z.object({
+  content: z
+    .string()
+    .describe(
+      "The content to insert or use as replacement. For charts, this will be a JSON string"
+    ),
   operation: z
-    .enum(["insert", "replace","insertReactive"])
-    .describe("insert: add new content, replace: modify existing content, insertReactive: add new content with reactivity"),
+    .enum(["insert", "replace"])
+    .describe("insert: add new content, replace: modify existing content"),
   replaceType: z
     .enum(["normal", "inplace"])
     .optional()
-    .describe("Only for replace operations - normal: replace entire block, inplace: modify within block structure"),
+    .describe(
+      "Only for replace operations - normal: replace entire block, inplace: modify within block structure and its mandatory to have one of either normal or inplace"
+    ),
+  prompt: z
+    .string()
+    .describe(
+      "for every operations - give back the user query, its very important that you give back the query."
+    ),
+  targetBlock: z
+    .string()
+    .describe("Block ID for positioning - omit unless user specifies location")
+    .optional(),
+  position: z
+    .enum(["before", "after", "replace"])
+    .describe("Position relative to target block")
+    .optional(),
   chartType: z
     .enum(["bar", "pie"])
     .optional()
     .describe("Specify the type of chart to render."),
+});
+
+export const reactiveBlockSchema = z.object({
+  content: z
+    .string()
+    .describe("Initial HTML content for text or JSON string for charts."),
+  operation: z.literal("insertReactive"),
+  prompt: z
+    .string()
+    .describe(
+      "give back the user query, its very important that you give back the query"
+    ),
   dependencyScope: z
     .array(z.string())
-    .optional()
-    .describe("If it is an insertReactive operations always always either add a array of dependency identifiers that the reactive text depends on. Can include specific block IDs or 'document' for whole document dependency"),
-  prompt: z.string().optional().describe("for insertReactive operations - give back the user query, its very important that you give back the query.")
-}).refine((data) => {
-  
-  if (data.operation === "insertReactive") {
-      return data.dependencyScope && data.dependencyScope.length > 0 && data.prompt;
-  }
-  return true;
-}, {
-  message: "insertReactive operations require both dependencyScope and prompt fields"
+    .describe(
+      "Array of specific block IDs that should trigger updates, or 'document' for document-wide dependencies"
+    ),
+  chartType: z
+    .enum(["bar", "pie"])
+    .describe("Specify the type of chart to render")
+    .optional(),
+  targetBlock: z
+    .string()
+    .describe("Block ID for positioning - omit unless user specifies location")
+    .optional(),
+  position: z
+    .enum(["before", "after"])
+    .describe("Position relative to target block")
+    .optional(),
 });

@@ -5,8 +5,19 @@ import { useEditorContext } from "./editor-provider";
 import { diffWords } from "diff";
 import { generateHTML } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
+import {
+  Bold,
+  BoldIcon,
+  Heading1,
+  Heading2,
+  Italic,
+  LucideQuote,
+  Quote,
+  Strikethrough,
+  Underline,
+} from "lucide-react";
+import { Toggle } from "./ui/toggle";
 
-const newtext = `The Sidemen are a UK-based YouTube collective of seven creators: KSI (Olajide Olatunji), Miniminter (Simon Minter), Zerkaa (Josh Bradley), TBJZL (Tobi Brown), Behzinga (Ethan Payne), Vikkstar123 (Vikram Barn), and W2S (Harry Lewis).`;
 export function BubbleMenuComponent() {
   const { editor } = useEditorContext();
   if (!editor) return null;
@@ -20,28 +31,69 @@ export function BubbleMenuComponent() {
 
           offset: [0, 8],
           placement: "top-end",
-          arrow: false,
+          arrow: true,
           maxWidth: "none",
         }}
       >
-        <div className="flex items-center gap-1 bg-popover border rounded-md p-1 shadow-lg">
-          <Button
-            size="sm"
-            variant={editor.isActive("bold") ? "default" : "outline"}
-            onClick={() => editor.chain().focus().toggleBold().run()}
+        <div className="bg-background backdrop-blur-xl border border-gray-700/50 rounded-lg p-1 flex items-center gap-2 shadow-2xl shadow-black/50">
+          <Toggle
+            pressed={editor.isActive("bold")}
+            onPressedChange={() => editor.chain().focus().toggleBold().run()}
+            disabled={!editor.can().chain().focus().toggleBold().run()}
+            aria-label="Toggle bold"
+            className=""
           >
-            Bold
-          </Button>
+            {" "}
+            <Bold />
+          </Toggle>
 
-          <Button
-            size="sm"
-            variant={editor.isActive("italic") ? "default" : "outline"}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
+          <Toggle
+            pressed={editor.isActive("italic")}
+            onPressedChange={() => editor.chain().focus().toggleItalic().run()}
+            disabled={!editor.can().chain().focus().toggleItalic().run()}
+            aria-label="Toggle Italic"
+            className=""
           >
-            Italic
-          </Button>
+            {" "}
+            <Italic />
+          </Toggle>
 
-          <Button
+          <Toggle
+            pressed={editor.isActive("underline")}
+            onPressedChange={() =>
+              editor.chain().focus().toggleUnderline().run()
+            }
+            disabled={!editor.can().chain().focus().toggleUnderline().run()}
+            aria-label="Toggle Italic"
+            className=""
+          >
+            {" "}
+            <Underline />
+          </Toggle>
+
+          <Toggle
+            pressed={editor.isActive("blockquote")}
+            onPressedChange={() =>
+              editor.chain().focus().toggleBlockquote().run()
+            }
+            disabled={!editor.can().chain().focus().toggleBlockquote().run()}
+            aria-label="Toggle Blockquote"
+          >
+            <Quote />
+          </Toggle>
+
+          <Toggle
+            pressed={editor.isActive("strike")}
+            onPressedChange={() => editor.chain().focus().toggleStrike().run()}
+            disabled={!editor.can().chain().focus().toggleStrike().run()}
+            aria-label="Toggle Italic"
+            className=""
+          >
+            {" "}
+            <Strikethrough />
+          </Toggle>
+
+          {/* <Button
             size="sm"
             variant="outline"
             onClick={() => {
@@ -61,8 +113,7 @@ export function BubbleMenuComponent() {
 
               console.log(html);
               const type = "replace";
-              //on continous clicks of replace it keeps adding the diffs up. gotta limit it to one.
-
+          
               editor.view.dispatch(
                 editor.state.tr.setMeta("createDiff", {
                   from,
@@ -76,9 +127,9 @@ export function BubbleMenuComponent() {
                 })
               );
             }}
-          >
+          > 
             replace
-          </Button>
+          </Button> */}
         </div>
       </BubbleMenu>
     </>

@@ -7,10 +7,10 @@ interface Result {
   position: "before" | "after" | "replace";
   operation: "replace" | "insert" | "insertReactive";
   targetBlock?: string | undefined;
-  replaceType?: "normal" | "inplace" | undefined | "insertReactive";
+  replaceType?: "normal" | "inplace" | undefined;
   dependencyScope?: string[];
   prompt?: string;
-  chartType?: "bar" | "pie";
+  chartType?: "bar"| "pie";
   isReactive?: boolean;
 }
 
@@ -160,7 +160,7 @@ export function applyAIOperation(
               originalPayload: textBetween,
             },
             type: "replace",
-            replaceType,
+            replaceType : replaceType ?? "normal",
           })
         );
 

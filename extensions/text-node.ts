@@ -61,6 +61,9 @@ export const TextNode = Node.create({
       },
       isReactive : {
         default : false
+      },
+      retryCount : {
+        default : 0
       }
     };
   },

@@ -14,7 +14,8 @@ import { Editor } from "@tiptap/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useHistoryState } from "@/store/useHistoryStore";
-import { generateSchema } from "@/lib/schema";
+import { reactiveBlockSchema, staticBlockSchema } from "@/lib/schema";
+import { toast } from "sonner";
 
 interface BlockInfo {
   position: {
@@ -29,8 +30,9 @@ export function TextOverlayAi() {
   const id = useSearchParams().get("id");
   const [input, setInput] = useState<string>("");
   const [messages, setMessages] = useState<any[]>([]);
-  const { show, position, editor, docsPos, hideInput } = useOverlayInputStore();
+  const { show, position, editor, docsPos, hideInput, type } = useOverlayInputStore();
   // const docId = useHistoryState(s => s.activeDocId)
+  console.log(type, "type si");
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const blocksRef = useRef(new Map<string, BlockInfo>());
@@ -38,7 +40,7 @@ export function TextOverlayAi() {
   const addEntry = useHistoryState((s) => s.addBatchedEntry);
   const { submit, object, isLoading, error } = useObject({
     api: "/api/generate",
-    schema: generateSchema,
+    schema: type === "static" ? staticBlockSchema : reactiveBlockSchema as any,
     onFinish: (result) => {
       console.log(result.object);
 
@@ -71,6 +73,10 @@ export function TextOverlayAi() {
         blocksRef
       );
     },
+    onError(error) {
+      console.log(error)
+      toast.error("Failed to generate!")
+    }
   });
 
   useEffect(() => {
@@ -146,7 +152,7 @@ export function TextOverlayAi() {
     const allMessages = [...messages, newUserMessage];
     setMessages(allMessages);
 
-    submit({ messages: allMessages });
+    submit({ messages: allMessages, type : type });
     // setInput("");
   };
 

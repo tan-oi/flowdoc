@@ -59,6 +59,9 @@ export const ChartNode = Node.create({
       isReactive : {
         default : false
       },
+      retryCount : {
+        default : 0
+      },
       computedContent: [],
     };
   },

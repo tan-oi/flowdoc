@@ -7,6 +7,7 @@ import {
   Check,
   X,
   Loader,
+  Loader2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -45,10 +46,12 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
+import { DocumentItem } from "./sidebar-element";
 import { Input } from "./ui/input";
+import { toast } from "sonner";
 
 interface AboutDoc {
   id: string | null;
@@ -103,11 +106,52 @@ export function LeftSideBar() {
 
   const handleDelete = (docId: string) => {
     console.log("Delete doc:", docId);
+    deleteDocument({
+      docId,
+    });
   };
-  const handleNextLoading = (id: string) => {
-    console.log(id, "loading");
-  };
-  const { mutate: createNewDocument, isPending: isCreating } = useMutation({
+ 
+
+  const { mutate: deleteDocument, isPending: isDeleting } = useMutation({
+    mutationFn: async ({ docId }: { docId: string }) => {
+      const res = await fetch(`/api/doc/${docId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message);
+      }
+      return res.json()
+    },
+    onSuccess: (data,variables) => {
+      console.log(variables);
+      toast.success("Deleted, redirecting to the new one"),
+        window.history.pushState(null, "", "/editor");
+      qc.setQueryData(["documents", session?.user.id], (prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          pages: prev.pages.map((p) =>
+            p.filter((doc) => doc.id !== variables.docId)
+          ),
+        };
+      });
+    },
+    onError(error) {
+      console.log(error);
+      toast.error(error?.message);
+    }
+  });
+
+  const {
+    mutate: createNewDocument,
+    isPending: isCreating,
+    error,
+  } = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/doc", {
         method: "POST",
@@ -118,10 +162,20 @@ export function LeftSideBar() {
           userId: session?.user?.id,
         }),
       });
-      if (!res.ok) throw new Error("Failed to create");
+      if (!res.ok) {
+        const errorData = await res.json();
+
+        if (res.status === 401) {
+          router.replace("/");
+        } else {
+          console.log(errorData);
+          throw new Error(errorData.message);
+        }
+      }
       return res.json();
     },
     onSuccess: (data) => {
+      toast.success("created!");
       qc.setQueryData(["editor-setup", data.id, session?.user?.id], {
         correctId: data.id,
         document: data,
@@ -156,6 +210,9 @@ export function LeftSideBar() {
       });
       window.history.pushState(null, "", `/editor?id=${data.id}`);
     },
+    onError(error) {
+      toast.error(error.message);
+    },
   });
 
   const { mutate: renameDocument, isPending: isRenaming } = useMutation({
@@ -177,7 +234,15 @@ export function LeftSideBar() {
           docId,
         }),
       });
-      if (!res.ok) console.log("failed");
+      if (!res.ok) {
+        const errorData = await res.json();
+
+        if (res.status === 401) {
+          router.replace("/");
+        } else {
+          throw new Error(errorData.message);
+        }
+      }
       return res.json();
     },
 
@@ -209,6 +274,7 @@ export function LeftSideBar() {
       console.log(error);
       console.log(context);
       console.log(variables);
+      toast.error(error.message)
     },
   });
 
@@ -326,7 +392,7 @@ export function LeftSideBar() {
                               <button
                                 className="p-[1px] mr-1 cursor-pointer"
                                 onClick={() => handleRenameSubmit(doc.id)}
-                                onMouseDown={(e) => e.preventDefault()} 
+                                onMouseDown={(e) => e.preventDefault()}
                               >
                                 <Check className="text-emerald-400 size-5" />
                               </button>
@@ -391,6 +457,9 @@ export function LeftSideBar() {
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                       <DropdownMenuItem
+                                        onMouseEnter={() =>
+                                          console.log("entered delete")
+                                        }
                                         onSelect={(e) => e.preventDefault()}
                                         className="text-destructive"
                                       >
@@ -417,7 +486,13 @@ export function LeftSideBar() {
                                           onClick={() => handleDelete(doc.id)}
                                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                         >
-                                          Delete
+                                          {isDeleting ? <>
+                                          <Loader2 className="animate-spin size-4"/>
+                                          </> : <>
+                                          {"Delete"}
+                                          </>
+                                          }
+                                          
                                         </AlertDialogAction>
                                       </AlertDialogFooter>
                                     </AlertDialogContent>

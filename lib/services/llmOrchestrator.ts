@@ -1,10 +1,12 @@
+
+
+
 import { sha256 } from "js-sha256";
 import DOMPurify from "dompurify";
 import { Editor } from "@tiptap/react";
 import { Node as ProseMirrorNode } from "prosemirror-model";
 
 import debounce from "lodash.debounce";
-import { type } from "os";
 
 interface LlmRequest {
   nodePos: number;
@@ -25,6 +27,7 @@ interface ReactiveTextAttrs {
   computedContent: string;
   errorMessage?: string;
   type: "text" | "bar" | "pie";
+  retryCount?: number;
 }
 
 const llmRequestQueue: LlmRequest[] = [];
@@ -122,6 +125,7 @@ const processQueue = async (editor: Editor): Promise<void> => {
           dependencyHash: currentContentHash,
           status: "idle",
           errorMessage: "",
+          retryCount: 0, 
         })
       );
 
@@ -144,13 +148,21 @@ const processQueue = async (editor: Editor): Promise<void> => {
         return;
       }
 
+      const currentRetryCount = errorNode.attrs.retryCount || 0;
+      const newRetryCount = currentRetryCount + 1;
+
       editor.view.dispatch(
         editor.state.tr.setNodeMarkup(nodePos, undefined, {
           ...errorNode.attrs,
           status: "error",
           errorMessage: errorMessage,
-          computedContent: `<p style="color: red;">Error: ${errorMessage}</p>`,
+          computedContent: `<p style="color: red;">Error: ${errorMessage} (Attempt ${newRetryCount}/2)</p>`,
+          retryCount: newRetryCount,
         })
+      );
+
+      console.log(
+        `[Orchestrator] Node at pos ${nodePos} failed. Retry count: ${newRetryCount}/2`
       );
     }
   });
@@ -192,6 +204,7 @@ const triggerReevaluationScan = (editor: Editor): void => {
         dependencyScope,
         computedContent,
         type,
+        retryCount = 0,
       } = attrs;
       console.log(dependencyHash, "in llmorc");
 
@@ -240,17 +253,23 @@ const triggerReevaluationScan = (editor: Editor): void => {
 
       const currentContentHash = sha256(dependentContent);
       console.log(dependentContent);
-      if (
-        ((currentContentHash !== dependencyHash && dependencyFound) ||
-          status === "error" ||
-          !dependencyFound) &&
-        status !== "computing" &&
-        !llmRequestQueue.some((req) => req.nodePos === pos)
-      ) {
+      
+   
+      const dependenciesChanged = currentContentHash !== dependencyHash;
+      
+     
+      const effectiveRetryCount = dependenciesChanged ? 0 : retryCount;
+      
+      const shouldReevaluate = (
+        (dependenciesChanged && dependencyFound) ||
+        !dependencyFound
+      ) && status !== "computing" && 
+        effectiveRetryCount < 2 &&
+        !llmRequestQueue.some((req) => req.nodePos === pos);
+
+      if (shouldReevaluate) {
         console.log(
-          `[Orchestrator] Queueing node at pos ${pos} for re-evaluation. Dependency changed: ${
-            currentContentHash !== dependencyHash
-          }`
+          `[Orchestrator] Queueing node at pos ${pos} for re-evaluation. Dependency changed: ${dependenciesChanged}, Retry count: ${effectiveRetryCount}/2`
         );
 
         nodesToQueue.push({
@@ -268,7 +287,12 @@ const triggerReevaluationScan = (editor: Editor): void => {
             ...node.attrs,
             status: "computing",
             errorMessage: "",
+            retryCount: effectiveRetryCount,
           })
+        );
+      } else if (effectiveRetryCount >= 2 && status === "error") {
+        console.log(
+          `[Orchestrator] Node at pos ${pos} has exceeded retry limit (${effectiveRetryCount}/2). Stopping retries.`
         );
       }
     }
@@ -352,6 +376,7 @@ export const forceNodeReevaluation = (editor: Editor, pos: number): void => {
         dependencyHash: "MANUAL_TRIGGER_" + Date.now(),
         status: "computing",
         errorMessage: "",
+        retryCount: 0, // Reset retry count on manual trigger
       })
     );
 
@@ -364,5 +389,3 @@ export const triggerImmediateScan = (editor: Editor): void => {
     debouncedScanRef.flush();
   }
 };
-
-//todo: add max retries, make queue better, modularize as well. also add a way such that we can do before and after block updates and not just specifics. probably add a check to make llm calls after a specific number of word changes.

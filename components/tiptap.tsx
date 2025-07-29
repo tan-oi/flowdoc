@@ -18,7 +18,6 @@ import { suggestionItems } from "@/lib/slash-commands";
 import SlashCommand from "./slash-command";
 
 
-import { useEditorId } from "@/hooks/use-editorId";
 import { BubbleMenuComponent } from "./bubble-menu";
 // import TaskList from "@tiptap/extension-task-list";
 // import TaskItem from "@tiptap/extension-task-item";
