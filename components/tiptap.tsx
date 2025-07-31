@@ -7,7 +7,6 @@ import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 
 import { DiffExtension, setCurrentEditor } from "@/extensions/diff";
-import { testNode } from "@/extensions/test";
 import Placeholder from "@tiptap/extension-placeholder";
 import {
   SlashCmdProvider,
@@ -75,7 +74,7 @@ const Tiptap = ({  data }: { data: any }) => {
       TextNode,
       ChartNode,
       DiffExtension,
-      
+    
       UniqueID.configure({
         types: [
           "heading",
