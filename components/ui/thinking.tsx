@@ -23,3 +23,6 @@ export const LoadingIndicator = memo(() => (
       </div>
     </div>
   ));
+
+  LoadingIndicator.displayName = "loadingIndicator"
+  

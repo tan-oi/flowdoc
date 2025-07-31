@@ -22,3 +22,5 @@ export const SafeHtml = memo(({ html,className }: { html: string, className? :st
       />
     );
   });
+
+  SafeHtml.displayName = "SafeHtml"

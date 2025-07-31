@@ -27,7 +27,7 @@ export function Auth() {
         onRequest: () => {
           setLoading(true);
         },
-        onSuccess: (ctx) => {
+        onSuccess: () => {
           setLoading(false);
           
           setOpen(false);

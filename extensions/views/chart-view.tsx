@@ -18,7 +18,6 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export const ChartView = (props: NodeViewProps) => {
   const { node } = props;
@@ -34,18 +33,18 @@ export const ChartView = (props: NodeViewProps) => {
       );
     }
 
-    let chartData = [];
+    let chartData: any[] = [];
     try {
       chartData = JSON.parse(computedContent);
     } catch (error) {
       console.error("Failed to parse chart data:", error);
       return <p>Invalid chart data format.</p>;
     }
-
+    
     if (!chartData || chartData.length === 0) {
       return <p>Generated chart will appear here.</p>;
     }
-
+    
     const dataKeys = Object.keys(chartData[0]).filter((key) => key !== "name");
     const colors = [
       "#3b82f6", // Blue
@@ -59,14 +58,19 @@ export const ChartView = (props: NodeViewProps) => {
       "#ec4899", // Pink
       "#6366f1", // Indigo
     ];
-
-    const chartConfig = dataKeys.reduce((config, key, index) => {
+    
+    type ChartConfigItem = {
+      label: string;
+      color: string;
+    };
+    
+    const chartConfig = dataKeys.reduce((config: Record<string, ChartConfigItem>, key, index) => {
       config[key] = {
         label: key.charAt(0).toUpperCase() + key.slice(1),
         color: colors[index % colors.length],
       };
       return config;
-    }, {});
+    }, {} as Record<string, ChartConfigItem>);
 
     // Render Bar Chart
     if (type === "bar") {
@@ -109,7 +113,7 @@ export const ChartView = (props: NodeViewProps) => {
     if (type === "pie") {
       console.log("hello");
 
-      let pieData;
+      let pieData:any[] = [];
 
       if (dataKeys.length === 1) {
         pieData = chartData.map((item, index) => ({

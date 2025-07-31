@@ -1,7 +1,7 @@
-export const formatTimestamp = (timestamp : any) => {
+export const formatTimestamp = (timestamp : string) => {
     const date = new Date(timestamp);
     const now = new Date();
-    const diff = now - date;
+    const diff = now.getTime() - date.getTime();
     
     if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`;
     if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`;

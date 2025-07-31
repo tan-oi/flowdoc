@@ -36,6 +36,7 @@ export async function GET(request: Request) {
     });
   }
   catch(err) {
+    console.log(err);
     // return NextResponse.error
   }
   

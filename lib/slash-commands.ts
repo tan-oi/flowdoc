@@ -20,7 +20,7 @@ export interface Command {
   title: string;
   searchTerms: string[];
   icon: LucideIcon;
-  command: ({ editor, range }: { editor: Editor; range: any }) => void;
+  command: ({ editor, range }: { editor: Editor; range: unknown }) => void;
 }
 
 export const suggestionItems = createSuggestionsItems([
@@ -75,7 +75,7 @@ export const suggestionItems = createSuggestionsItems([
     title: "To-do List",
     searchTerms: ["todo", "task", "list", "check", "checkbox"],
     icon: CheckSquare,
-    command: ({ editor, range }) => {
+    command: ({ }) => {
       // editor.chain().focus().deleteRange(range).toggleTaskList().run();
     },
   },

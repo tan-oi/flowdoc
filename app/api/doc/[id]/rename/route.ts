@@ -34,7 +34,7 @@ export async function PATCH(
     }
   try {
     const { title, userId } = await req.json();
-
+    console.log(userId);
     const { id } = await params;
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -59,6 +59,7 @@ export async function PATCH(
       updateTitle,
     });
   } catch (err) {
+    console.log(err);
     return NextResponse.json({
         message : "Renaming failed, try again later!"
     }, {

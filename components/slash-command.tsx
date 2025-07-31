@@ -19,11 +19,11 @@ const SlashCommand = ({ editor }: SlashCommandProps) => {
             {suggestionItems[0].title}
           </SlashCmd.Item>
         </SlashCmd.Empty>
-        <SlashCmd.List className="bg-black px-4 rounded-lg min-w-[130px]">
+        <SlashCmd.List className="bg-neutral-900 px-4 rounded-lg min-w-[130px]">
           <p className="text-[10px] text-gray-400 font-semibold uppercase py-2 px-1">
             Suggestions
           </p>
-          {suggestionItems.map((item: Command) => (
+          {suggestionItems.map((item) => (
             <SlashCmd.Item
               key={item.title}
               value={item.title}

@@ -82,7 +82,7 @@ export function DocumentPanel({ id }: { id: string }) {
                     {totalHistory.map((h, i) => (
                       <div
                         key={i}
-                        className="flex flex-col rounded-lg bg-gradient-to-r from-transparent via-neutral-800 to-transparent border border-px px-2 py-4 gap-4"
+                        className="flex flex-col rounded-lg dark:bg-gradient-to-r from-transparent via-neutral-800 to-transparent border border-px px-2 py-4 gap-4"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-[4px]">
@@ -111,7 +111,7 @@ export function DocumentPanel({ id }: { id: string }) {
                           </p>
                           <SafeHtml
                             html={h.content}
-                            className="text-[16px] text-gray-300 line-clamp-4 leading-relaxed"
+                            className="text-[16px] text-primary/70  line-clamp-4 leading-relaxed"
                           />
                         </div>
                       </div>

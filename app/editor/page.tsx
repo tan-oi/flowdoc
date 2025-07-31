@@ -12,6 +12,7 @@ export default async function Editor() {
     headers: await headers(),
   });
 
+  console.log(session);
   if (!session) redirect("/");
   
   return (

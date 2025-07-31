@@ -21,3 +21,4 @@ export const Message = memo(({ message }: { message: VercelMessage }) => {
       </div>
     );
   });
+  Message.displayName = "Message";

@@ -20,6 +20,6 @@ const redis = new Redis({
 
   export const apiRateLimiter = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(1,"60s"),
+    limiter: Ratelimit.slidingWindow(10,"60s"),
     prefix : "ratelimit:api"
   })

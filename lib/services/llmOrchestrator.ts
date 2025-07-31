@@ -16,6 +16,7 @@ interface LlmRequest {
   currentContentHash: string;
   computedContent: string;
   type: "text" | "bar" | "pie";
+  newDependencyScope : string[]
 }
 
 interface ReactiveTextAttrs {
@@ -28,6 +29,7 @@ interface ReactiveTextAttrs {
   errorMessage?: string;
   type: "text" | "bar" | "pie";
   retryCount?: number;
+
 }
 
 const llmRequestQueue: LlmRequest[] = [];
@@ -91,6 +93,7 @@ const processQueue = async (editor: Editor): Promise<void> => {
       currentContentHash,
       computedContent,
       type,
+      newDependencyScope
     } = request;
 
     try {
@@ -123,7 +126,8 @@ const processQueue = async (editor: Editor): Promise<void> => {
           computedContent: sanitizedHtml,
           sourceHash: newComputedHash,
           dependencyHash: currentContentHash,
-          status: "idle",
+          dependencyScope : newDependencyScope,
+          status: "idle", 
           errorMessage: "",
           retryCount: 0, 
         })
@@ -210,7 +214,7 @@ const triggerReevaluationScan = (editor: Editor): void => {
 
       let dependentContent = "";
       let dependencyFound = true;
-
+      const newDependencyScope:string[] = [];
       if (dependencyScope[0] === "document") {
         doc.descendants((n: ProseMirrorNode, p: number) => {
           if (!n.attrs.isReactive && n.isTextblock) {
@@ -226,9 +230,11 @@ const triggerReevaluationScan = (editor: Editor): void => {
         const contents: string[] = [];
         dependencyScope.forEach((blockId: string) => {
           let found = false;
-          doc.descendants((n: ProseMirrorNode, p: number) => {
+          doc.descendants((n: ProseMirrorNode) => {
             if (n.attrs && n.attrs.id === blockId) {
               if (typeof n.textContent === "string") {
+                console.log(n.attrs.id);
+                newDependencyScope.push(n.attrs.id)
                 contents.push(n.textContent);
               }
               found = true;
@@ -236,6 +242,7 @@ const triggerReevaluationScan = (editor: Editor): void => {
             }
           });
           if (!found) {
+            console.log(newDependencyScope);
             dependencyFound = false;
             console.warn(
               `[Orchestrator] Dependent block with ID "${blockId}" not found.`
@@ -252,11 +259,11 @@ const triggerReevaluationScan = (editor: Editor): void => {
       }
 
       const currentContentHash = sha256(dependentContent);
-      console.log(dependentContent);
+      console.log(currentContentHash);
       
    
       const dependenciesChanged = currentContentHash !== dependencyHash;
-      
+        
      
       const effectiveRetryCount = dependenciesChanged ? 0 : retryCount;
       
@@ -279,6 +286,7 @@ const triggerReevaluationScan = (editor: Editor): void => {
           dependentContent,
           currentContentHash,
           computedContent,
+          newDependencyScope,
           type,
         });
 
@@ -376,7 +384,7 @@ export const forceNodeReevaluation = (editor: Editor, pos: number): void => {
         dependencyHash: "MANUAL_TRIGGER_" + Date.now(),
         status: "computing",
         errorMessage: "",
-        retryCount: 0, // Reset retry count on manual trigger
+        retryCount: 0, 
       })
     );
 

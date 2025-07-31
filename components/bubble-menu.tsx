@@ -1,21 +1,9 @@
 "use client";
 import { BubbleMenu } from "@tiptap/react";
-import { Button } from "./ui/button";
+
 import { useEditorContext } from "./editor-provider";
-import { diffWords } from "diff";
-import { generateHTML } from "@tiptap/core";
-import StarterKit from "@tiptap/starter-kit";
-import {
-  Bold,
-  BoldIcon,
-  Heading1,
-  Heading2,
-  Italic,
-  LucideQuote,
-  Quote,
-  Strikethrough,
-  Underline,
-} from "lucide-react";
+
+import { Bold, Italic, Quote, Strikethrough, Underline } from "lucide-react";
 import { Toggle } from "./ui/toggle";
 
 export function BubbleMenuComponent() {

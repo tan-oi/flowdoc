@@ -28,8 +28,9 @@ export async function GET(req: Request, { params }: {
         return NextResponse.json(history);
     }
     catch(err) {
+        console.log(err);
         return NextResponse.json({
-            
+            message : "failed to get data."
         })
     }
 

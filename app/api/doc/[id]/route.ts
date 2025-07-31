@@ -4,6 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { apiRateLimiter } from "@/lib/rate-limiter";
+
+interface Docs {
+  prompt : string;
+  content : string;
+  type : "text" | "chart" | "reactive";
+  createdAt : string;
+}
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -101,7 +108,7 @@ export async function PATCH(
     ) {
       promises.push(
         prisma.history.createMany({
-          data: history.map((doc: any) => ({
+          data: history.map((doc: Docs) => ({
             prompt: doc.prompt,
             content: doc.content,
             type: doc.type,
@@ -168,7 +175,7 @@ export async function DELETE(
 
   const { id } = await params;
 
-  const deleteDoc = await prisma.document.delete({
+   await prisma.document.delete({
     where: {
       id,
     },

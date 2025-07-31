@@ -41,6 +41,7 @@ import {
 
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQueryClient,
@@ -49,7 +50,6 @@ import { authClient } from "@/lib/auth-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
-import { DocumentItem } from "./sidebar-element";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
 
@@ -58,6 +58,15 @@ interface AboutDoc {
   originalTitle?: string;
   updateTitle?: string;
 }
+interface Document {
+  id : string;
+  title : string;
+  updatedAt : string;
+  
+}
+
+type DocumentsData = InfiniteData<Document[], number>;
+
 export function LeftSideBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -79,6 +88,7 @@ export function LeftSideBar() {
   };
 
   const handleRenameCancel = (docId: string) => {
+    console.log(docId);
     setAboutRenameDoc({
       id: null,
       originalTitle: "",
@@ -128,18 +138,21 @@ export function LeftSideBar() {
     },
     onSuccess: (data,variables) => {
       console.log(variables);
-      toast.success("Deleted, redirecting to the new one"),
+      toast.success("Deleted, redirecting to the new one");
         window.history.pushState(null, "", "/editor");
-      qc.setQueryData(["documents", session?.user.id], (prev) => {
+      qc.setQueryData<DocumentsData>(["documents", session?.user.id], (prev) => {
         if (!prev) return prev;
 
         return {
           ...prev,
-          pages: prev.pages.map((p) =>
-            p.filter((doc) => doc.id !== variables.docId)
+          pages: prev.pages.map((p : Document[]) =>
+            p.filter((doc:Document) => doc.id !== variables.docId)
           ),
         };
       });
+      qc.removeQueries({ queryKey: ["editor-setup", session?.user?.id, variables.docId], exact : true })
+      qc.removeQueries({ queryKey: ["doc", history, variables.docId] })
+
     },
     onError(error) {
       console.log(error);
@@ -150,7 +163,6 @@ export function LeftSideBar() {
   const {
     mutate: createNewDocument,
     isPending: isCreating,
-    error,
   } = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/doc", {
@@ -181,7 +193,7 @@ export function LeftSideBar() {
         document: data,
       });
 
-      qc.setQueryData(["documents", session?.user.id], (prev) => {
+      qc.setQueryData<DocumentsData>(["documents", session?.user.id], (prev) => {
         if (!prev)
           return {
             pages: [
@@ -250,13 +262,13 @@ export function LeftSideBar() {
       console.log(data);
       console.log(variables);
       console.log(context);
-      qc.setQueryData(["documents", session?.user.id], (prev) => {
+      qc.setQueryData<DocumentsData>(["documents", session?.user.id], (prev) => {
         if (!prev) return prev;
 
         return {
           ...prev,
-          pages: prev.pages.map((p) =>
-            p.map((doc) =>
+          pages: prev.pages.map((p : Document[]) =>
+            p.map((doc : Document) =>
               doc.id === variables.docId
                 ? {
                     ...doc,
@@ -473,8 +485,8 @@ export function LeftSideBar() {
                                           Delete Document
                                         </AlertDialogTitle>
                                         <AlertDialogDescription>
-                                          Are you sure you want to delete "
-                                          {doc.title}"? This action cannot be
+                                          Are you sure you want to delete 
+                                          {doc.title}? This action cannot be
                                           undone.
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>

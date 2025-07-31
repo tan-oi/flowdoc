@@ -9,3 +9,5 @@ export const EmptyState = memo(() => (
       </div>
     </div>
   ));
+
+  EmptyState.displayName = "EmptyState";

@@ -1,3 +1,4 @@
+import { BlockInfo } from "@/components/ai-text-overlay";
 import { Editor } from "@tiptap/react";
 import { sha256 } from "js-sha256";
 import { customAlphabet } from "nanoid";
@@ -18,10 +19,10 @@ export function applyAIOperation(
   editor: Editor,
   result: Result,
   docsPos: number,
-  capturedPositions
+  capturedPositions : Map<string, BlockInfo>
 ) {
   if (!editor || typeof docsPos !== "number") return;
-
+  console.log(capturedPositions);
   queueMicrotask(() => {
     const operationType = result.operation || "insert";
     const content = result.content;
@@ -30,7 +31,7 @@ export function applyAIOperation(
     const replaceType = result.replaceType;
     console.log(operationType);
     const prompt = result.prompt;
-    const blocks = capturedPositions.current;
+    const blocks = capturedPositions;
 
     console.log(blocks);
     const aboutTarget = blockId ? blocks.get(blockId) : undefined;
@@ -68,7 +69,7 @@ export function applyAIOperation(
             attrs: {},
           });
 
-          editor.chain().focus().insertContentAt(insertAt, toBeAdded).run();
+          editor.chain().focus().scrollIntoView().insertContentAt(insertAt, toBeAdded).run();
         } else {
           editor.view.dispatch(
             editor.state.tr.setMeta("createDiff", {
@@ -87,7 +88,6 @@ export function applyAIOperation(
         break;
 
       case "insertReactive":
-        console.log('why the fuck is this working?');
         const dependencyScope = result.dependencyScope;
         const nanoid = customAlphabet(
           "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 7
@@ -147,9 +147,9 @@ export function applyAIOperation(
         break;
 
       case "replace":
-        let textBetween;
-
-        textBetween = editor.state.doc.textBetween(from, to, " ");
+        
+        
+       const textBetween = editor.state.doc.textBetween(from, to, " ");
 
         editor.view.dispatch(
           editor.state.tr.setMeta("createDiff", {

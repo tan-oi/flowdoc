@@ -6,18 +6,18 @@ import { Button } from "./ui/button";
 import { useOverlayInputStore } from "@/store/useEditorAIStore";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2 } from "lucide-react";
-import { experimental_useObject as useObject, useChat } from "@ai-sdk/react";
+import { experimental_useObject as useObject } from "@ai-sdk/react";
 import { getState } from "@/lib/print";
 
 import { applyAIOperation } from "@/lib/functions/applyOperations";
 import { Editor } from "@tiptap/react";
-import { useQueryClient } from "@tanstack/react-query";
+
 import { useSearchParams } from "next/navigation";
 import { useHistoryState } from "@/store/useHistoryStore";
 import { reactiveBlockSchema, staticBlockSchema } from "@/lib/schema";
 import { toast } from "sonner";
 
-interface BlockInfo {
+export interface BlockInfo {
   position: {
     to: number;
     from: number;
@@ -26,41 +26,49 @@ interface BlockInfo {
 }
 
 export function TextOverlayAi() {
-  const qc = useQueryClient();
   const id = useSearchParams().get("id");
   const [input, setInput] = useState<string>("");
   const [messages, setMessages] = useState<any[]>([]);
-  const { show, position, editor, docsPos, hideInput, type } = useOverlayInputStore();
+  const { show, editor, docsPos, hideInput, type } = useOverlayInputStore();
   // const docId = useHistoryState(s => s.activeDocId)
-  console.log(type, "type si");
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const blocksRef = useRef(new Map<string, BlockInfo>());
   const docId = useHistoryState((s) => s.activeDocId);
   const addEntry = useHistoryState((s) => s.addBatchedEntry);
-  const { submit, object, isLoading, error } = useObject({
+  const { submit,  isLoading } = useObject({
+    id : id as string,
     api: "/api/generate",
+ 
     schema: type === "static" ? staticBlockSchema : reactiveBlockSchema as any,
     onFinish: (result) => {
       console.log(result.object);
 
+      // @ts-nocheck
+      const obj = result.object as any
       addEntry(docId as string, {
         prompt: input,
-        content: result.object?.content as string,
+      
+        content: obj?.content as string,
         createdAt: new Date().toISOString(),
-        type: result.object?.chartType
+     
+        type: obj?.chartType
           ? "chart"
-          : result.object?.operation === "insertReactive" ||
-            result.object?.dependencyScope
+      
+          : obj?.operation === "insertReactive" ||
+
+          obj?.dependencyScope
           ? "reactive"
           : "text",
       });
 
+      // @ts-nocheck
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant" as const,
-          content: result.object?.content,
+          
+          content: obj?.content,
         },
       ]);
       setInput("");
@@ -70,7 +78,7 @@ export function TextOverlayAi() {
         editor as Editor,
         result?.object as any,
         docsPos as number,
-        blocksRef
+        blocksRef.current
       );
     },
     onError(error) {
@@ -78,7 +86,6 @@ export function TextOverlayAi() {
       toast.error("Failed to generate!")
     }
   });
-
   useEffect(() => {
     if (show && textareaRef.current) {
       textareaRef.current.focus();
@@ -139,7 +146,6 @@ export function TextOverlayAi() {
     if (!input.trim() || isLoading) return;
 
     const { context, blocksByIds } = getState(editor?.state.doc);
-    console.log(context);
     const userPrompt = `USER QUERY : ${input}`;
     const senMessages = context + userPrompt;
     // positionsRef.current = blocksByIds;
@@ -215,17 +221,7 @@ export function TextOverlayAi() {
               <Send className="size-4" />
             </Button>
           </div>
-          <p>{docId}</p>
-          <button
-            onClick={() => {
-              const data = useHistoryState
-                .getState()
-                .getBatchedEntries(id as string);
-              console.log(data);
-            }}
-          >
-            click
-          </button>
+        
         </div>
       </div>
     ),

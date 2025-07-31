@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 
-interface DocumentEntry {
+export interface DocumentEntry {
   prompt: string;
   content: string;
   createdAt: any;
@@ -95,7 +95,7 @@ export const useHistoryState = create<DocumentStore>((set, get) => ({
     batchedEntries: {
       ...state.batchedEntries,
       [docId]: (state.batchedEntries[docId] || []).filter(
-        entry => !entryIds.includes(entry.id)
+        entry => !entryIds.includes(docId)
       )
     }
   })),
