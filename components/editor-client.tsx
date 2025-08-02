@@ -98,6 +98,7 @@ import { EditorProvider } from "./editor-provider";
 import { DocumentPanel } from "./document-panel";
 import { Toolbar } from "./toolbar";
 import { SidebarTrigger } from "./ui/sidebar";
+import { EditorShimmer } from "./main-shimmer";
 
 function EditorContent({ userId }: { userId: string }) {
   const searchParams = useSearchParams();
@@ -142,7 +143,9 @@ function EditorContent({ userId }: { userId: string }) {
   }, [data, urlId, isReady]);
 
   if (isLoading || !isReady) {
-    return <div></div>;
+    return <div>
+      <EditorShimmer/>
+    </div>;
   }
 
   if (!data) {

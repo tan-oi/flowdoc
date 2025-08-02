@@ -58,12 +58,12 @@ export function DocumentPanel({ id }: { id: string }) {
                 History
               </TabsTrigger>
 
-              <TabsTrigger
+              {/* <TabsTrigger
                 value="ideas"
                 className="data-[state=active]:bg-white data-[state=active]:rounded-none data-[state=active]:border-none"
               >
                 Ideas
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
 
             <TabsContent className="w-full h-full" value="history">

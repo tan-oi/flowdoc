@@ -52,6 +52,7 @@ import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
+import { SidebarShimmer } from "./sidebar-shimmer";
 
 interface AboutDoc {
   id: string | null;
@@ -314,16 +315,12 @@ export function LeftSideBar() {
     }
   }, [session, isPending, router]);
 
-  if (isPending) return <div>Loading sidebar</div>;
+ 
 
-  if (!data) {
-    return (
-      <>
-        <div>Sidbear loading</div>
-      </>
-    );
+  if(isPending || !data) {
+    return <SidebarShimmer/>
+
   }
-
   const allDocuments = data?.pages.flat() || [];
 
   return (
@@ -331,7 +328,7 @@ export function LeftSideBar() {
       <SidebarContent className="">
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold font-italic font-mono">
-            Vellum
+            FlowDocs
           </SidebarGroupLabel>
           <Separator className="my-2" />
         </SidebarGroup>
