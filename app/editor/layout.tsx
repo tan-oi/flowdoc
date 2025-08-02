@@ -2,6 +2,7 @@ import { TextOverlayAi } from "@/components/ai-text-overlay";
 import { LeftSideBar } from "@/components/left-sidebar";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import ResponsiveWarningModal from "@/components/warning-modal";
 
 export default function EditorLayout({
   children,
@@ -24,6 +25,7 @@ export default function EditorLayout({
         <div className="h-full">
           <main className="relative bg-muted/30 h-full">{children}</main>
         </div>
+        <ResponsiveWarningModal/>
       </SidebarInset>
     </SidebarProvider>
   </>

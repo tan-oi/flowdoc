@@ -22,14 +22,14 @@ export function GenerateSummary() {
         opacity: 0,
         x: 50,
       }}
-      className="bg-white rounded-lg text-black lg:p-6 flex flex-col gap-4"
+      className="bg-white rounded-lg text-black lg:p-6 p-4 flex flex-col gap-4"
     >
       <div className="text-neutral-400 text-sm">
         watch how easy is it to add a summary
       </div>
 
-      <div className="px-4 flex flex-col gap-4">
-        <p className="text-neutral-600">
+      <div className="px-4 flex flex-col md:gap-4 gap-3">
+        <p className="text-neutral-700 md:text-md text-sm">
           In Q2 2025, the company saw consistent sales of its flagship product,
           the AlphaSmart Speaker. In April, 3,200 units were sold, followed by a
           peak in May with 4,150 units, before slightly declining to 3,750 units
@@ -58,7 +58,7 @@ export function GenerateSummary() {
                 text="/generate a summary for this doc"
                 onComplete={() => setShowSummary(true)}
                 speed={30}
-                className={"text-lg font-bold"}
+                className={"md:text-lg font-bold"}
                 startDelay={0}
               />
             </motion.div>

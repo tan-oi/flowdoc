@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, SaveIcon } from "lucide-react";
+import { Loader2, PanelRight, SaveIcon } from "lucide-react";
 
 import { useEditorContext } from "./editor-provider";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +10,7 @@ import { sha256 } from "js-sha256";
 import { toast } from "sonner";
 import { JSONContent } from "@tiptap/react";
 import { DisabledSave } from "./disabled-autosave";
+import { usePanelStore } from "@/store/panelStore";
 
 interface ToolbarProps {
   children?: React.ReactNode;
@@ -22,7 +23,7 @@ export function Toolbar({ children, id }: ToolbarProps) {
   const { editor } = useEditorContext();
 
   const qc = useQueryClient();
-
+  const { toggle } = usePanelStore();
   useEffect(() => {
     if (editor && previousSaveRef.current === null) {
       const initialText = editor.getText();
@@ -134,6 +135,10 @@ export function Toolbar({ children, id }: ToolbarProps) {
             </>
           )}
         </Button>
+
+          <Button variant={"ghost"} size={"sm"} onClick={toggle}>
+            <PanelRight/>
+          </Button>
 
         <div className="font-mono text-xs font-extralight"></div>
       </div>

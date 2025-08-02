@@ -63,12 +63,10 @@ export function Features() {
                   variants={{
                     rest: {
                       opacity: 1,
-
                       filter: "blur(4px)",
                     },
                     hover: {
                       opacity: 1,
-
                       filter: "blur(0px)",
                     },
                   }}
@@ -114,11 +112,11 @@ export function Features() {
 
                   <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 w-32 h-2/3 bg-blue-900/30">
                     <div className="bg-gradient-to-b from-blue-800/40 to-blue-900/60 w-full h-full rounded-b-lg flex flex-col items-center justify-center text-xs text-blue-200 space-y-1">
-                      <div>Citations</div>
+                      <div>Summaries</div>
                       <div>Grammar</div>
-                      <div>Formatting</div>
-                      <div>References</div>
-                      <div>Structure</div>
+                      <div>Overview</div>
+                      <div>Charts</div>
+                      <div>Replace</div>
                       <div className="text-blue-300/50">...</div>
                     </div>
                   </div>
@@ -130,38 +128,52 @@ export function Features() {
           </div>
 
           <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-            <div className="bg-card aspect-[4/3] border border-px rounded-lg flex flex-col gap-2 p-4">
-              <Skeleton className="w-full h-[20px]" />
-              <Skeleton className="w-full h-[20px]" />
-              <Skeleton className="w-full h-[20px]" />
-              <Skeleton className="w-full h-[20px]" />
+            <div className="bg-card aspect-[3/2] md:aspect-[4/3] border border-px rounded-lg flex flex-col justify-around md:justify-none p-4 md:gap-2">
+              <div className="flex flex-col gap-5 md:gap-2">
+                <Skeleton className="w-full h-[20px]" />
+                <Skeleton className="w-full h-[20px]" />
+                <Skeleton className="w-full h-[20px]" />
+                <Skeleton className="hidden sm:block w-full h-[20px] md:hidden" />
+                <Skeleton className="hidden sm:block w-full h-[20px] md:hidden" />
+                
+              </div>
 
-              <p className="font-bold font-primary ">Zero config interface</p>
-              <p className="text-neutral-400 text-[14px]">
-                No annoying panel, no bloated toolbar
-              </p>
+              <div className="gap-2">
+                <p className="font-bold font-primary sm:text-xl md:text-base">Zero config interface</p>
+                <p className="text-neutral-400 text-[14px] sm:text-[15px] md:text-[14px]">
+                  No annoying panel, no bloated toolbar
+                </p>
+                <p className="text-neutral-400 text-[14px] sm:text-[15px] md:text-[14px]">
+                  Just pure joy of writing
+                </p>
+              </div>
             </div>
-            <div className="bg-card aspect-[4/3] rounded-lg border border-px rounded-lg flex flex-col gap-4 p-4">
+
+            <div
+           
+            className="bg-card aspect-[3/2] md:aspect-[4/3] rounded-lg border border-px flex flex-col gap-4 p-4 ">
               <p className="">
                 <span className="font-bold font-primary">You are</span> in
                 Control
               </p>
 
               <div className="flex items-center justify-end gap-2">
-                <div className="p-1 bg-emerald-500 rounded-lg">accept</div>
-                <div className="p-1 bg-red-500 rounded-lg">reject</div>
+                <div className="p-3 bg-emerald-500 rounded-lg text-md">
+                  accept
+                </div>
+                <div className="p-3 bg-red-500 rounded-lg text-md">reject</div>
               </div>
 
               <div>
-                <p className="bg-neutral-800 text-neutral-400 w-2/3 rounded px-2 pb-9">
+                <p className="bg-neutral-800 text-neutral-400 w-2/3 rounded px-2 pb-14 pt-6 sm:pb-9 text-sm h-full">
                   History
                 </p>
               </div>
             </div>
-            <div className="bg-card aspect-[4/3] rounded-lg rounded border border-px flex flex-col gap-2 p-2">
-    
+
+            <div className="bg-card aspect-[3/2] md:aspect-[4/3] rounded-lg border border-px flex flex-col gap-2 p-4">
               <div>
-                <p>
+                <p className="text-sm md:text-base">
                   Works on
                   <span className="font-primary font-bold"> intent</span>, not
                   clicks
@@ -169,11 +181,10 @@ export function Features() {
               </div>
 
               <motion.div
-                className="bg-gray-900 rounded-lg p-6 relative"
+                className="bg-gray-900 rounded-lg p-4 md:p-6 relative flex-1"
                 initial="start"
                 animate="end"
               >
-
                 <motion.div
                   className="absolute top-4 right-4 w-2 h-2 rounded-full bg-gray-500"
                   animate={{
@@ -191,12 +202,11 @@ export function Features() {
                   }}
                 />
 
-
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   {[0, 0.2, 0.4].map((delay, i) => (
                     <motion.div
                       key={i}
-                      className={`h-4 bg-gray-700 rounded ${
+                      className={`h-3 md:h-4 bg-gray-700 rounded ${
                         i === 1 ? "w-3/4" : i === 2 ? "w-1/2" : ""
                       }`}
                       animate={{
@@ -212,9 +222,8 @@ export function Features() {
                   ))}
                 </div>
 
-          
                 <motion.div
-                  className="mt-4 text-sm text-gray-400"
+                  className="mt-3 md:mt-4 text-xs md:text-sm text-gray-400"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: [0, 1, 1, 0] }}
                   transition={{

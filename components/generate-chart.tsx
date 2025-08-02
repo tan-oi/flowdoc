@@ -30,14 +30,14 @@ export function GenerateChart() {
         x : 50,
         opacity : 0
       }}
-      className="bg-white rounded-lg text-black lg:p-6 flex flex-col gap-4"
+      className="bg-white rounded-lg text-black p-4 lg:p-6 flex flex-col gap-4"
     >
       <div className="text-neutral-400 text-sm">
         just type what chart you need
       </div>
 
-        <div className="px-4 flex flex-col gap-4">
-          <p>
+        <div className="px-4 flex flex-col md:gap-4 gap-3 text-neutral-700">
+          <p className="md:text-md text-sm text-neutral-700">
             In Q2 2025, the company saw consistent sales of its flagship
             product, the AlphaSmart Speaker. In April, 3,200 units were sold,
             followed by a peak in May with 4,150 units, before slightly
@@ -63,7 +63,7 @@ export function GenerateChart() {
                   text="/generate a chart for the first paragraph"
                   onComplete={() => setShowChart(true)}
                   speed={30}
-                  className={"text-lg font-bold"}
+                  className={"md:text-lg font-bold"}
                   startDelay={5}
                 />
               </motion.div>
@@ -73,12 +73,14 @@ export function GenerateChart() {
                 initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
-                className="h-64 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200 p-4 group"
+                className="h-64 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200 p-2 sm:p-4 group"
               >
                 <p className="hidden group-hover:inline text-neutral-600">
                   generate a chart for the sales
                 </p>
-                <ResponsiveContainer width="70%" height="100%">
+                <ResponsiveContainer 
+                
+                width="100%" height="100%">
                   <BarChart
                     data={chartData}
                     margin={{ top: 20, right: 30, left: 20, bottom: 20 }}

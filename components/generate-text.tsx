@@ -18,7 +18,7 @@ export function GenerateText() {
       transition={{
         duration: 0.3,
       }}
-      className="bg-white rounded-lg text-black lg:p-6 flex flex-col gap-4"
+      className="bg-white rounded-lg text-black lg:p-6 p-4 flex flex-col gap-4"
     >
       <div className="text-neutral-400 text-sm">
         ask AI to generate some cool content for you
@@ -38,7 +38,7 @@ export function GenerateText() {
                 text="/generate a couple of paragraphs on a imaginary product named AlphaSmart Speaker showing its Q2 2025 sales and market analysis"
                 onComplete={() => setContent(true)}
                 speed={30}
-                className={"text-lg font-bold"}
+                className={"md:text-lg font-bold"}
                 startDelay={0}
               />
             </motion.div>

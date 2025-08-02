@@ -9,7 +9,7 @@ export default function Home() {
     "write with intelligence",
     "make docs that react",
     "stop wrestling tools",
-    "write at the speed of thoughts",
+    "write in a flash",
   ];
   return (
     <>
@@ -40,26 +40,26 @@ export default function Home() {
         <div className="relative z-10 max-w-4xl mx-auto px-4 flex flex-col justify-center items-center min-h-screen">
           <div className="flex flex-col justify-center items-center gap-4 text-white tracking-wide">
             <div className="flex flex-col items-center justify-center gap-2 text-center lg:text-left">
-              <p className="text-2xl lg:text-4xl font-semibold text-foreground">
+              <p className="text-xl sm:text-2xl lg:text-4xl font-semibold text-foreground">
                 Docs are{" "}
                 <span className="line-through text-gray-400">broken</span>
               </p>
 
               <div className="flex items-center gap-1">
-                <p className="text-xl lg:text-3xl font-semibold">
+                <p className="text-md sm:text-xl lg:text-3xl font-semibold">
                   its time to
                 </p>
                 <TextRotate
                   texts={texts}
-                  mainClassName="text-xl lg:text-3xl bg-orange-500 font-semibold px-1 py-1 rounded"
+                  mainClassName="text-sm sm:text-xl lg:text-3xl bg-orange-500 font-semibold px-1 py-1 rounded"
                 />
               </div>
             </div>
 
-            <p className="text-muted-foreground text-center max-w-2xl">
+            <p className="text-sm sm:text-md md:text-lg text-muted-foreground text-center max-w-2xl">
               The newest way to write documents!
             </p>
-            <p className="text-accent-foreground font-medium mb-3">
+            <p className="text-xs md:text-lg text-accent-foreground font-medium mb-3">
               Think. Write. Done.
             </p>
           </div>
@@ -71,6 +71,7 @@ export default function Home() {
             Try it now!
           </Button> */}
           <Auth />
+          {/* <ModeToggle/> */}
         </div>
       </section>
 

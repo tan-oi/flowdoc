@@ -14,7 +14,7 @@ export function SectionTwo() {
   return (
     <>
       <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-bold tracking-wide">
+        <h2 className="md:text-2xl font-bold tracking-wide text-lg">
           See what magic can be done with this
         </h2>
         <div className="flex items-center w-full">
@@ -24,17 +24,26 @@ export function SectionTwo() {
           <Tabs
             value={selectedTab}
             onValueChange={setSelectedTab}
-            className="border-none w-full"
+            className="border-none w-full "
           >
-            <TabsList className="border-none bg-transparent">
-              <TabsTrigger value="tab1" className="border-none shadow-none">
+            <TabsList className="border-none bg-transparent gap-2 sm:gap-4">
+              <TabsTrigger value="tab1" className="border-none shadow-none text-sm md:text-md">
+               <span className="hidden sm:inline">
+
                 Generate Charts
+               </span>
+               <span className="inline sm:hidden">Charts</span>
               </TabsTrigger>
-              <TabsTrigger value="tab2" className="border-none ">
+              <TabsTrigger value="tab2" className="border-none text-sm md:text-md p-0">
+                  
+                <span className="hidden sm:inline">
                 Generate Summary
+                </span>
+                <span className="inline sm:hidden">Summary</span>
               </TabsTrigger>
-              <TabsTrigger value="tab3" className="border-none ">
-                Generate Content
+              <TabsTrigger value="tab3" className="border-none text-sm md:text-md p-0">
+                <span className="hidden sm:inline">Generate Content</span>
+                <span className="inline sm:hidden">Content</span>
               </TabsTrigger>
             </TabsList>
 
