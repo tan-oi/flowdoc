@@ -60,10 +60,9 @@ interface AboutDoc {
   updateTitle?: string;
 }
 interface Document {
-  id : string;
-  title : string;
-  updatedAt : string;
-  
+  id: string;
+  title: string;
+  updatedAt: string;
 }
 
 type DocumentsData = InfiniteData<Document[], number>;
@@ -121,9 +120,53 @@ export function LeftSideBar() {
       docId,
     });
   };
- 
+
+  // const { mutate: deleteDocument, isPending: isDeleting } = useMutation({
+  //   mutationFn: async ({ docId }: { docId: string }) => {
+  //     const res = await fetch(`/api/doc/${docId}`, {
+  //       method: "DELETE",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //     });
+  //     if (!res.ok) {
+  //       const errorData = await res.json();
+  //       throw new Error(errorData.message);
+  //     }
+  //     return res.json();
+  //   },
+  //   onSuccess: (data, variables) => {
+  //     console.log(variables);
+  //     toast.success("Deleted, redirecting to the new one");
+
+  //     window.history.pushState(null, "", "/editor");
+    //     qc.setQueryData<DocumentsData>(
+    //       ["documents", session?.user.id],
+    //       (prev) => {
+    //         if (!prev) return prev;
+
+    //         return {
+    //           ...prev,
+    //           pages: prev.pages.map((p: Document[]) =>
+    //             p.filter((doc: Document) => doc.id !== variables.docId)
+    //           ),
+    //         };
+    //       }
+    //     );
+  //     qc.removeQueries({
+  //       queryKey: ["editor-setup", session?.user?.id, variables.docId],
+  //       exact: true,
+  //     });
+  //     qc.removeQueries({ queryKey: ["doc", history, variables.docId] });
+  //   },
+  //   onError(error) {
+  //     console.log(error);
+  //     toast.error(error?.message);
+  //   },
+  // });
 
   const { mutate: deleteDocument, isPending: isDeleting } = useMutation({
+ 
     mutationFn: async ({ docId }: { docId: string }) => {
       const res = await fetch(`/api/doc/${docId}`, {
         method: "DELETE",
@@ -135,36 +178,55 @@ export function LeftSideBar() {
         const errorData = await res.json();
         throw new Error(errorData.message);
       }
-      return res.json()
+      return res.json();
     },
-    onSuccess: (data,variables) => {
-      console.log(variables);
-      toast.success("Deleted, redirecting to the new one");
-        window.history.pushState(null, "", "/editor");
-      qc.setQueryData<DocumentsData>(["documents", session?.user.id], (prev) => {
-        if (!prev) return prev;
-
-        return {
-          ...prev,
-          pages: prev.pages.map((p : Document[]) =>
-            p.filter((doc:Document) => doc.id !== variables.docId)
-          ),
-        };
+    
+    onSuccess: (data, variables) => {
+      const deletedDocId = variables.docId;
+      const isCurrentlySelected = selectedId === deletedDocId;
+  
+      qc.setQueryData<DocumentsData>(
+        ["documents", session?.user.id],
+        (prev) => {
+          if (!prev) return prev;
+  
+          const updatedPages = prev.pages
+            .map((page) => page.filter((doc) => doc.id !== deletedDocId))
+            .filter((page) => page.length > 0); 
+  
+          if (isCurrentlySelected) {
+            const remainingDocs = updatedPages.flat();
+            
+            if (remainingDocs.length > 0) {
+              window.history.pushState(null, "", `/editor?id=${remainingDocs[0].id}`);
+            } else {
+              setTimeout(() => createNewDocument(), 100);
+            }
+          }
+  
+          return {
+            ...prev,
+            pages: updatedPages,
+          };
+        }
+      );
+  
+      qc.removeQueries({
+        queryKey: ["editor-setup", session?.user?.id, deletedDocId],
+        exact: true,
       });
-      qc.removeQueries({ queryKey: ["editor-setup", session?.user?.id, variables.docId], exact : true })
-      qc.removeQueries({ queryKey: ["doc", history, variables.docId] })
-
+      qc.removeQueries({ queryKey: ["doc", "history", deletedDocId] });
+  
+      toast.success("Document deleted");
     },
+    
     onError(error) {
       console.log(error);
       toast.error(error?.message);
-    }
+    },
   });
 
-  const {
-    mutate: createNewDocument,
-    isPending: isCreating,
-  } = useMutation({
+  const { mutate: createNewDocument, isPending: isCreating } = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/doc", {
         method: "POST",
@@ -194,33 +256,36 @@ export function LeftSideBar() {
         document: data,
       });
 
-      qc.setQueryData<DocumentsData>(["documents", session?.user.id], (prev) => {
-        if (!prev)
+      qc.setQueryData<DocumentsData>(
+        ["documents", session?.user.id],
+        (prev) => {
+          if (!prev)
+            return {
+              pages: [
+                [
+                  {
+                    ...data,
+                    title: "Untitled1",
+                  },
+                ],
+              ],
+              pageParams: [0],
+            };
           return {
+            ...prev,
             pages: [
               [
                 {
                   ...data,
-                  title: "Untitled1",
+                  title: "Untitled",
                 },
+                ...prev.pages[0],
               ],
+              ...prev.pages.slice(1),
             ],
-            pageParams: [0],
           };
-        return {
-          ...prev,
-          pages: [
-            [
-              {
-                ...data,
-                title: "Untitled",
-              },
-              ...prev.pages[0],
-            ],
-            ...prev.pages.slice(1),
-          ],
-        };
-      });
+        }
+      );
       window.history.pushState(null, "", `/editor?id=${data.id}`);
     },
     onError(error) {
@@ -263,23 +328,26 @@ export function LeftSideBar() {
       console.log(data);
       console.log(variables);
       console.log(context);
-      qc.setQueryData<DocumentsData>(["documents", session?.user.id], (prev) => {
-        if (!prev) return prev;
+      qc.setQueryData<DocumentsData>(
+        ["documents", session?.user.id],
+        (prev) => {
+          if (!prev) return prev;
 
-        return {
-          ...prev,
-          pages: prev.pages.map((p : Document[]) =>
-            p.map((doc : Document) =>
-              doc.id === variables.docId
-                ? {
-                    ...doc,
-                    title: variables.updateTitle,
-                  }
-                : doc
-            )
-          ),
-        };
-      });
+          return {
+            ...prev,
+            pages: prev.pages.map((p: Document[]) =>
+              p.map((doc: Document) =>
+                doc.id === variables.docId
+                  ? {
+                      ...doc,
+                      title: variables.updateTitle,
+                    }
+                  : doc
+              )
+            ),
+          };
+        }
+      );
 
       handleRenameCancel(variables.docId);
     },
@@ -287,7 +355,7 @@ export function LeftSideBar() {
       console.log(error);
       console.log(context);
       console.log(variables);
-      toast.error(error.message)
+      toast.error(error.message);
     },
   });
 
@@ -315,11 +383,8 @@ export function LeftSideBar() {
     }
   }, [session, isPending, router]);
 
- 
-
-  if(isPending || !data) {
-    return <SidebarShimmer/>
-
+  if (isPending || !data) {
+    return <SidebarShimmer />;
   }
   const allDocuments = data?.pages.flat() || [];
 
@@ -455,7 +520,7 @@ export function LeftSideBar() {
                                   </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
+                                  <DropdownMenuItem className="cursor-pointer"
                                     onClick={() =>
                                       handleRename(doc.id, doc.title)
                                     }
@@ -466,11 +531,9 @@ export function LeftSideBar() {
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                       <DropdownMenuItem
-                                        onMouseEnter={() =>
-                                          console.log("entered delete")
-                                        }
+
                                         onSelect={(e) => e.preventDefault()}
-                                        className="text-destructive"
+                                        className="text-destructive cursor-pointer"
                                       >
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Delete
@@ -482,7 +545,7 @@ export function LeftSideBar() {
                                           Delete Document
                                         </AlertDialogTitle>
                                         <AlertDialogDescription>
-                                          Are you sure you want to delete 
+                                          Are you sure you want to delete
                                           {doc.title}? This action cannot be
                                           undone.
                                         </AlertDialogDescription>
@@ -495,13 +558,13 @@ export function LeftSideBar() {
                                           onClick={() => handleDelete(doc.id)}
                                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                         >
-                                          {isDeleting ? <>
-                                          <Loader2 className="animate-spin size-4"/>
-                                          </> : <>
-                                          {"Delete"}
-                                          </>
-                                          }
-                                          
+                                          {isDeleting ? (
+                                            <>
+                                              <Loader2 className="animate-spin size-4" />
+                                            </>
+                                          ) : (
+                                            <>{"Delete"}</>
+                                          )}
                                         </AlertDialogAction>
                                       </AlertDialogFooter>
                                     </AlertDialogContent>
