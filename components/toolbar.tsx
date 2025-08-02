@@ -9,6 +9,7 @@ import { DocumentEntry, useHistoryState } from "@/store/useHistoryStore";
 import { sha256 } from "js-sha256";
 import { toast } from "sonner";
 import { JSONContent } from "@tiptap/react";
+import { DisabledSave } from "./disabled-autosave";
 
 interface ToolbarProps {
   children?: React.ReactNode;
@@ -113,6 +114,7 @@ export function Toolbar({ children, id }: ToolbarProps) {
     <div className="flex items-center justify-between gap-2 p-[8px] backdrop-blur-md border-b border-neutral-800 bg-transparent">
       <div className="flex items-center">{children}</div>
 
+    <DisabledSave/>
       <div className="flex items-center gap-2">
         <Button
           size={"sm"}

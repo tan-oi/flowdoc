@@ -38,7 +38,7 @@ import {
                 {Array.from({ length: 8 }).map((_, index) => (
                   <SidebarMenuItem key={index} className="cursor-pointer group rounded-lg">
                     <div className="flex items-center justify-between w-full p-2">
-                      {/* Document title shimmer */}
+              
                       <Skeleton className={`h-4 ${
                         index === 0 ? 'w-32' : 
                         index === 1 ? 'w-24' : 
@@ -49,13 +49,12 @@ import {
                         index === 6 ? 'w-30' : 'w-22'
                       }`} />
                       
-                      {/* More options button shimmer */}
                       <Skeleton className="h-6 w-6 rounded" />
                     </div>
                   </SidebarMenuItem>
                 ))}
                 
-                {/* Load more shimmer */}
+              
                 <SidebarMenuItem>
                   <div className="p-2">
                     <Skeleton className="h-4 w-20" />

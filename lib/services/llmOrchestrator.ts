@@ -216,6 +216,7 @@ const triggerReevaluationScan = (editor: Editor): void => {
       let dependencyFound = true;
       const newDependencyScope:string[] = [];
       if (dependencyScope[0] === "document") {
+        newDependencyScope.push("document");
         doc.descendants((n: ProseMirrorNode, p: number) => {
           if (!n.attrs.isReactive && n.isTextblock) {
             const content = n.textContent.trim();
