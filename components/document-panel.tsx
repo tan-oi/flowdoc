@@ -47,7 +47,7 @@ export function DocumentPanel({ id }: { id: string }) {
   console.log(entries, "from entires");
   return (
     <>
-      <div className="flex flex-1 flex-col h-full border-l-px shadow-sm bg-card rounded-lg min-w-[300px] text-card-foreground py-2 px-1 border-r-card overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/50 scrollbar-track-transparent ">
+      <div className="flex flex-1 flex-col h-full border-l-px shadow-sm bg-muted rounded-lg min-w-[300px] text-card-foreground py-2 px-1 border-r-card overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/50 scrollbar-track-transparent ">
         <div className="py-1 px-1 w-full h-full">
           <Tabs className="w-full h-full" defaultValue="history">
             <TabsList className="w-full">
@@ -82,7 +82,7 @@ export function DocumentPanel({ id }: { id: string }) {
                     {totalHistory.map((h, i) => (
                       <div
                         key={i}
-                        className="flex flex-col rounded-lg dark:bg-gradient-to-r from-transparent via-neutral-800 to-transparent border border-px px-2 py-4 gap-4"
+                        className="flex flex-col rounded-lg dark:bg-gradient-to-r from-transparent via-neutral-800 shadow-sm to-transparent border border-[2px] px-2 py-4 gap-4"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-[4px]">

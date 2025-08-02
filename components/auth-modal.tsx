@@ -18,10 +18,10 @@ export function Auth() {
 
   const handleSignup = async () => {
     setLoading(true);
-   const res =  await authClient.signIn.social(
+    const res = await authClient.signIn.social(
       {
         provider: "google",
-        callbackURL : "/dashboard"
+        callbackURL: "/editor",
       },
       {
         onRequest: () => {
@@ -29,7 +29,7 @@ export function Auth() {
         },
         onSuccess: () => {
           setLoading(false);
-          
+
           setOpen(false);
         },
         onError: () => {
@@ -42,7 +42,7 @@ export function Auth() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="cursor-pointer">Get Started</Button>
+        <Button className="cursor-pointer">Try it now.</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm max-h-sm rounded-[12px] border bg-transparent backdrop-blur-xl">
         <DialogHeader>
@@ -56,6 +56,7 @@ export function Auth() {
           <Button
             disabled={loading}
             onClick={handleSignup}
+            size={"sm"}
             type="button"
             className="w-full flex items-center justify-center bg-white hover:bg-gray-300 hover:cursor-pointer gap-2"
           >
@@ -107,10 +108,8 @@ export function Auth() {
             )}
             {loading ? "Signing in..." : "Sign in with Google"}
           </Button>
-         
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-
