@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       "base64"
     ).toString("utf-8");
     const result = await generateObject({
-      model: google("gemini-2.5-flash-lite-preview-06-17"),
+      model: google("gemini-2.5-flash"),
       schema:
         type === "static" ? staticBlockSchema : (reactiveBlockSchema as any),
       system: type === "static" ? staticPrompt : reactivePrompt,

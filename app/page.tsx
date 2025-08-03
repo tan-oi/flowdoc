@@ -2,7 +2,9 @@ import { Auth } from "@/components/auth-modal";
 import { Features } from "@/components/features";
 import { SectionTwo } from "@/components/landing-section-two";
 import { ModeToggle } from "@/components/mode-toggle";
+import { Button } from "@/components/ui/button";
 import TextRotate from "@/components/ui/text-rotate";
+import Link from "next/link";
 
 export default function Home() {
   const texts = [
@@ -70,7 +72,16 @@ export default function Home() {
           >
             Try it now!
           </Button> */}
-          <Auth />
+          <div className="flex gap-2">
+            <Auth />
+            <Link
+              target="_blank"
+              rel="noopener noreferrer"
+              href={"https://youtu.be/EyPwyjhCJvY?si=NLjzGacbKwyacW4s"}
+            >
+              <Button variant={"secondary"}>Watch demo</Button>
+            </Link>
+          </div>
           {/* <ModeToggle/> */}
         </div>
       </section>
