@@ -11,7 +11,7 @@ interface Result {
   replaceType?: "normal" | "inplace" | undefined;
   dependencyScope?: string[];
   prompt?: string;
-  chartType?: "bar"| "pie";
+  chartType?: "bar" | "pie";
   isReactive?: boolean;
 }
 
@@ -19,7 +19,7 @@ export function applyAIOperation(
   editor: Editor,
   result: Result,
   docsPos: number,
-  capturedPositions : Map<string, BlockInfo>
+  capturedPositions: Map<string, BlockInfo>
 ) {
   if (!editor || typeof docsPos !== "number") return;
   console.log(capturedPositions);
@@ -42,7 +42,6 @@ export function applyAIOperation(
     const from = range?.from ?? docsPos;
     const to = range?.to ?? docsPos;
     console.log(from, " ", to);
-  
 
     switch (operationType) {
       case "insert":
@@ -69,20 +68,27 @@ export function applyAIOperation(
             attrs: {},
           });
 
-          editor.chain().focus().scrollIntoView().insertContentAt(insertAt, toBeAdded).run();
+          editor
+            .chain()
+            .focus()
+            .scrollIntoView()
+            .insertContentAt(insertAt, toBeAdded)
+            .run();
         } else {
           editor.view.dispatch(
-            editor.state.tr.setMeta("createDiff", {
-              // from: position === "after" && from !== 0 ? to : from,
-              // to: position === "after" && from !== 0 ? to : from,
-              from: insertAt,
-              to: insertAt,
-              payload: {
-                changePayload: content,
-                originalPayload: null,
-              },
-              type: "insert",
-            })
+            editor.state.tr
+              .setMeta("createDiff", {
+                // from: position === "after" && from !== 0 ? to : from,
+                // to: position === "after" && from !== 0 ? to : from,
+                from: insertAt,
+                to: insertAt,
+                payload: {
+                  changePayload: content,
+                  originalPayload: null,
+                },
+                type: "insert",
+              })
+              
           );
         }
         break;
@@ -90,7 +96,8 @@ export function applyAIOperation(
       case "insertReactive":
         const dependencyScope = result.dependencyScope;
         const nanoid = customAlphabet(
-          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 7
+          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+          7
         );
         let contentToBeHashed;
         if (dependencyScope) {
@@ -116,9 +123,7 @@ export function applyAIOperation(
           const sourceHash = sha256(result.content);
           const dependencyHash = sha256(contentToBeHashed);
           console.log(dependencyHash, "in apply");
-          const blockType = result.chartType
-            ? "ChartBlock"
-            : "TextBlock";
+          const blockType = result.chartType ? "ChartBlock" : "TextBlock";
           const toBeAdded: Array<{ type: string; attrs?: any }> = [
             {
               type: blockType,
@@ -142,26 +147,31 @@ export function applyAIOperation(
             attrs: {},
           });
 
-          editor.chain().focus().insertContentAt(insertAt, toBeAdded).run();
+          editor
+            .chain()
+            .focus()
+            .scrollIntoView()
+            .insertContentAt(insertAt, toBeAdded)
+            .run();
         }
         break;
 
       case "replace":
-        
-        
-       const textBetween = editor.state.doc.textBetween(from, to, " ");
+        const textBetween = editor.state.doc.textBetween(from, to, " ");
 
         editor.view.dispatch(
-          editor.state.tr.setMeta("createDiff", {
-            from: from,
-            to: to,
-            payload: {
-              changePayload: content,
-              originalPayload: textBetween,
-            },
-            type: "replace",
-            replaceType : replaceType ?? "normal",
-          })
+          editor.state.tr
+            .setMeta("createDiff", {
+              from: from,
+              to: to,
+              payload: {
+                changePayload: content,
+                originalPayload: textBetween,
+              },
+              type: "replace",
+              replaceType: replaceType ?? "normal",
+            })
+            .scrollIntoView()
         );
 
         break;

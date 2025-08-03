@@ -80,6 +80,7 @@ export const DiffExtension = Extension.create({
                         if (currentEditor) {
                           currentEditor
                             .chain()
+                            .scrollIntoView()
                             .insertContentAt(
                               {
                                 from,
@@ -145,7 +146,9 @@ export const DiffExtension = Extension.create({
                           e.stopPropagation();
 
                           if(currentEditor) {
-                            currentEditor.chain().insertContentAt({
+                            currentEditor.chain()
+                            .scrollIntoView()
+                            .insertContentAt({
                               from,to
                             }, changePayload).setMeta("clearDiff",true).run();
                           }
@@ -207,7 +210,7 @@ export const DiffExtension = Extension.create({
                     e.stopPropagation();
                     if (currentEditor) {
                       currentEditor
-                        .chain()
+                        .chain().scrollIntoView()
                         .insertContentAt(from, changePayload)
                         .setMeta("clearDiff", true)
                         .focus(from + (changePayload?.length || 0))

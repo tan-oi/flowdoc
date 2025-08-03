@@ -1,14 +1,5 @@
 "use client";
-import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  LoaderIcon,
-  Check,
-  X,
-  Loader,
-  Loader2,
-} from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Check, X } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -47,7 +38,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -78,6 +69,21 @@ export function LeftSideBar() {
     originalTitle: "",
     updateTitle: "",
   });
+
+  const handleError = async (res: Response, router: any) => {
+    if (res.status === 401) {
+      router.replace("/");
+      return;
+    }
+    try {
+      const errorData = await res.json();
+      throw new Error(
+        errorData.message || "Something went wrong. Please try again."
+      );
+    } catch {
+      throw new Error("Something went wrong. Please try again.");
+    }
+  };
 
   const handleRename = (docId: string, title: string) => {
     setAboutRenameDoc({
@@ -121,52 +127,7 @@ export function LeftSideBar() {
     });
   };
 
-  // const { mutate: deleteDocument, isPending: isDeleting } = useMutation({
-  //   mutationFn: async ({ docId }: { docId: string }) => {
-  //     const res = await fetch(`/api/doc/${docId}`, {
-  //       method: "DELETE",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //     });
-  //     if (!res.ok) {
-  //       const errorData = await res.json();
-  //       throw new Error(errorData.message);
-  //     }
-  //     return res.json();
-  //   },
-  //   onSuccess: (data, variables) => {
-  //     console.log(variables);
-  //     toast.success("Deleted, redirecting to the new one");
-
-  //     window.history.pushState(null, "", "/editor");
-    //     qc.setQueryData<DocumentsData>(
-    //       ["documents", session?.user.id],
-    //       (prev) => {
-    //         if (!prev) return prev;
-
-    //         return {
-    //           ...prev,
-    //           pages: prev.pages.map((p: Document[]) =>
-    //             p.filter((doc: Document) => doc.id !== variables.docId)
-    //           ),
-    //         };
-    //       }
-    //     );
-  //     qc.removeQueries({
-  //       queryKey: ["editor-setup", session?.user?.id, variables.docId],
-  //       exact: true,
-  //     });
-  //     qc.removeQueries({ queryKey: ["doc", history, variables.docId] });
-  //   },
-  //   onError(error) {
-  //     console.log(error);
-  //     toast.error(error?.message);
-  //   },
-  // });
-
-  const { mutate: deleteDocument, isPending: isDeleting } = useMutation({
- 
+  const { mutate: deleteDocument } = useMutation({
     mutationFn: async ({ docId }: { docId: string }) => {
       const res = await fetch(`/api/doc/${docId}`, {
         method: "DELETE",
@@ -175,58 +136,77 @@ export function LeftSideBar() {
         },
       });
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message);
+        // const errorData = await res.json();
+        // throw new Error(errorData.message);
+        await handleError(res, router);
       }
       return res.json();
     },
-    
-    onSuccess: (data, variables) => {
-      const deletedDocId = variables.docId;
-      const isCurrentlySelected = selectedId === deletedDocId;
-  
-      qc.setQueryData<DocumentsData>(
-        ["documents", session?.user.id],
-        (prev) => {
-          if (!prev) return prev;
-  
-          const updatedPages = prev.pages
-            .map((page) => page.filter((doc) => doc.id !== deletedDocId))
-            .filter((page) => page.length > 0); 
-  
-          if (isCurrentlySelected) {
-            const remainingDocs = updatedPages.flat();
-            
-            if (remainingDocs.length > 0) {
-              window.history.pushState(null, "", `/editor?id=${remainingDocs[0].id}`);
-            } else {
-              setTimeout(() => createNewDocument(), 100);
-            }
-          }
-  
-          return {
-            ...prev,
-            pages: updatedPages,
-          };
+
+    onMutate: async ({ docId }) => {
+      const queryKey = ["documents", session?.user.id];
+
+      await qc.cancelQueries({ queryKey });
+      const previousData = qc.getQueryData<DocumentsData>(queryKey);
+
+      const isCurrentlySelected = selectedId === docId;
+
+      qc.setQueryData<DocumentsData>(queryKey, (prev) => {
+        if (!prev) return prev;
+
+        const updatedPages = prev.pages
+          .map((page) => page.filter((doc) => doc.id !== docId))
+          .filter((page) => page.length > 0);
+
+        return {
+          ...prev,
+          pages: updatedPages,
+        };
+      });
+
+      if (isCurrentlySelected) {
+        const remainingDocs =
+          qc.getQueryData<DocumentsData>(queryKey)?.pages.flat() || [];
+        if (remainingDocs.length > 0) {
+          window.history.pushState(
+            null,
+            "",
+            `/editor?id=${remainingDocs[0].id}`
+          );
+        } else {
+          window.history.pushState(null, "", "/editor");
+
+          setTimeout(() => createNewDocument(), 0);
         }
-      );
-  
+      }
+
       qc.removeQueries({
-        queryKey: ["editor-setup", session?.user?.id, deletedDocId],
+        queryKey: ["editor-setup", session?.user?.id, docId],
         exact: true,
       });
-      qc.removeQueries({ queryKey: ["doc", "history", deletedDocId] });
-  
+      qc.removeQueries({ queryKey: ["doc", "history", docId] });
+
       toast.success("Document deleted");
+
+      return { previousData, isCurrentlySelected, docId };
     },
-    
-    onError(error) {
-      console.log(error);
-      toast.error(error?.message);
+
+    onError: (error, variables, context) => {
+      if (context?.previousData) {
+        qc.setQueryData(["documents", session?.user.id], context.previousData);
+
+        if (context.isCurrentlySelected) {
+          window.history.pushState(null, "", `/editor?id=${context.docId}`);
+        }
+      }
+
+      toast.error(error?.message || "Failed to delete document");
     },
+
+    onSuccess: () => {},
   });
 
-  const { mutate: createNewDocument, isPending: isCreating } = useMutation({
+  const { mutate: createNewDocument } = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/doc", {
         method: "POST",
@@ -238,62 +218,102 @@ export function LeftSideBar() {
         }),
       });
       if (!res.ok) {
-        const errorData = await res.json();
-
-        if (res.status === 401) {
-          router.replace("/");
-        } else {
-          console.log(errorData);
-          throw new Error(errorData.message);
-        }
+        await handleError(res, router);
       }
       return res.json();
     },
-    onSuccess: (data) => {
-      toast.success("created!");
-      qc.setQueryData(["editor-setup", data.id, session?.user?.id], {
-        correctId: data.id,
-        document: data,
-      });
 
-      qc.setQueryData<DocumentsData>(
-        ["documents", session?.user.id],
-        (prev) => {
-          if (!prev)
-            return {
-              pages: [
-                [
-                  {
-                    ...data,
-                    title: "Untitled1",
-                  },
-                ],
-              ],
-              pageParams: [0],
-            };
+    onMutate: async () => {
+      const queryKey = ["documents", session?.user.id];
+
+      await qc.cancelQueries({ queryKey });
+
+      const previousData = qc.getQueryData<DocumentsData>(queryKey);
+
+      const tempId = `temp-${Date.now()}-${Math.random()}`;
+      const optimisticDoc = {
+        id: tempId,
+        title: "Untitled",
+        updatedAt: new Date().toISOString(),
+      };
+
+      qc.setQueryData<DocumentsData>(queryKey, (prev) => {
+        if (!prev) {
           return {
-            ...prev,
-            pages: [
-              [
-                {
-                  ...data,
-                  title: "Untitled",
-                },
-                ...prev.pages[0],
-              ],
-              ...prev.pages.slice(1),
-            ],
+            pages: [[optimisticDoc]],
+            pageParams: [0],
           };
         }
-      );
-      window.history.pushState(null, "", `/editor?id=${data.id}`);
+        return {
+          ...prev,
+          pages: [[optimisticDoc, ...prev.pages[0]], ...prev.pages.slice(1)],
+        };
+      });
+
+      window.history.pushState(null, "", `/editor?id=${tempId}`);
+
+      qc.setQueryData(["editor-setup", tempId, session?.user?.id], {
+        correctId: tempId,
+        document: optimisticDoc,
+      });
+
+      toast.success("Document created!");
+
+      return { previousData, optimisticDoc, tempId };
     },
-    onError(error) {
-      toast.error(error.message);
+
+    onSuccess: (realData, variables, context) => {
+      const queryKey = ["documents", session?.user.id];
+
+      if (!context) return;
+      qc.setQueryData<DocumentsData>(queryKey, (prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          pages: prev.pages.map((page, pageIndex) =>
+            pageIndex === 0
+              ? page.map((doc) =>
+                  doc.id === context.tempId
+                    ? { ...realData, title: "Untitled" }
+                    : doc
+                )
+              : page
+          ),
+        };
+      });
+
+      qc.removeQueries({
+        queryKey: ["editor-setup", session?.user?.id, context.tempId],
+        exact: true,
+      });
+      qc.setQueryData(["editor-setup", realData.id, session?.user?.id], {
+        correctId: realData.id,
+        document: realData,
+      });
+
+      window.history.replaceState(null, "", `/editor?id=${realData.id}`);
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousData) {
+        qc.setQueryData(["documents", session?.user.id], context.previousData);
+      }
+
+      if (context?.tempId) {
+        qc.removeQueries({
+          queryKey: ["editor-setup", session?.user?.id, context.tempId],
+          exact: true,
+        });
+      }
+
+      window.history.pushState(null, "", "/editor");
+
+      toast.error(error.message || "Failed to create document");
     },
   });
 
-  const { mutate: renameDocument, isPending: isRenaming } = useMutation({
+  const { mutate: renameDocument } = useMutation({
     mutationFn: async ({
       docId,
       updateTitle,
@@ -313,50 +333,63 @@ export function LeftSideBar() {
         }),
       });
       if (!res.ok) {
-        const errorData = await res.json();
-
-        if (res.status === 401) {
-          router.replace("/");
-        } else {
-          throw new Error(errorData.message);
-        }
+        await handleError(res, router);
       }
       return res.json();
     },
 
-    onSuccess(data, variables, context) {
-      console.log(data);
-      console.log(variables);
-      console.log(context);
-      qc.setQueryData<DocumentsData>(
-        ["documents", session?.user.id],
-        (prev) => {
-          if (!prev) return prev;
+    onMutate: async ({ docId, updateTitle }) => {
+      const queryKey = ["documents", session?.user.id];
 
-          return {
-            ...prev,
-            pages: prev.pages.map((p: Document[]) =>
-              p.map((doc: Document) =>
-                doc.id === variables.docId
-                  ? {
-                      ...doc,
-                      title: variables.updateTitle,
-                    }
-                  : doc
-              )
-            ),
-          };
-        }
-      );
+      await qc.cancelQueries({ queryKey });
 
-      handleRenameCancel(variables.docId);
+      const previousData = qc.getQueryData<DocumentsData>(queryKey);
+      const previousRenameState = { ...aboutRenameDoc };
+
+      qc.setQueryData<DocumentsData>(queryKey, (prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          pages: prev.pages.map((page: Document[]) =>
+            page.map((doc: Document) =>
+              doc.id === docId
+                ? {
+                    ...doc,
+                    title: updateTitle,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : doc
+            )
+          ),
+        };
+      });
+
+      setAboutRenameDoc({
+        id: null,
+        originalTitle: "",
+        updateTitle: "",
+      });
+
+      toast.success("Document renamed");
+
+      return { previousData, previousRenameState, docId, updateTitle };
     },
-    onError(error, variables, context) {
-      console.log(error);
-      console.log(context);
-      console.log(variables);
-      toast.error(error.message);
+
+    onError: (error, variables, context) => {
+      if (context?.previousData) {
+        qc.setQueryData(["documents", session?.user.id], context.previousData);
+      }
+
+      // Restore rename UI state
+      if (context?.previousRenameState) {
+        setAboutRenameDoc(context.previousRenameState);
+      }
+
+      toast.error(error.message || "Failed to rename document");
     },
+
+    onSuccess: () => {},
   });
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
@@ -403,16 +436,8 @@ export function LeftSideBar() {
             <Button
               className="w-full cursor-pointer"
               onClick={() => createNewDocument()}
-              disabled={isCreating}
             >
-              {isCreating ? (
-                <>
-                  <LoaderIcon className="animate-spin mr-2" />
-                  <span>Creating..</span>
-                </>
-              ) : (
-                <>Create new</>
-              )}
+              Create new
             </Button>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -427,154 +452,136 @@ export function LeftSideBar() {
                 allDocuments.map((doc) => (
                   <div key={doc.id}>
                     {aboutRenameDoc.id === doc.id ? (
-                      <>
-                        <SidebarMenuItem
-                          key={doc.id}
-                          className={`cursor-pointer flex group rounded-lg ${
-                            selectedId === doc.id ? "font-medium" : ""
-                          }`}
+                      <SidebarMenuItem
+                        key={doc.id}
+                        className={`cursor-pointer flex group rounded-lg ${
+                          selectedId === doc.id ? "font-medium" : ""
+                        }`}
+                      >
+                        <Input
+                          className="bg-transparent border-none rounded"
+                          value={aboutRenameDoc.updateTitle || ""}
+                          onChange={(e) =>
+                            setAboutRenameDoc((p) => ({
+                              ...p,
+                              updateTitle: e.target.value,
+                            }))
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleRenameSubmit(doc.id);
+                            }
+                            if (e.key === "Escape") {
+                              e.preventDefault();
+                              handleRenameCancel(doc.id);
+                            }
+                          }}
+                          autoFocus
+                          onBlur={() => handleRenameCancel(doc.id)}
+                        />
+
+                        <button
+                          className="p-[1px] mr-1 cursor-pointer"
+                          onClick={() => handleRenameSubmit(doc.id)}
+                          onMouseDown={(e) => e.preventDefault()}
                         >
-                          {isRenaming ? (
-                            <>
-                              <Loader className="animate-spin" />
-                            </>
-                          ) : (
-                            <>
-                              <Input
-                                className="bg-transparent border-none rounded"
-                                value={aboutRenameDoc.updateTitle || ""}
-                                onChange={(e) =>
-                                  setAboutRenameDoc((p) => ({
-                                    ...p,
-                                    updateTitle: e.target.value,
-                                  }))
-                                }
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    handleRenameSubmit(doc.id);
-                                  }
-                                  if (e.key === "Escape") {
-                                    e.preventDefault();
-                                    handleRenameCancel(doc.id);
-                                  }
-                                }}
-                                autoFocus
-                                onBlur={() => handleRenameCancel(doc.id)}
-                              />
+                          <Check className="text-emerald-400 size-5" />
+                        </button>
 
-                              <button
-                                className="p-[1px] mr-1 cursor-pointer"
-                                onClick={() => handleRenameSubmit(doc.id)}
-                                onMouseDown={(e) => e.preventDefault()}
-                              >
-                                <Check className="text-emerald-400 size-5" />
-                              </button>
-
-                              <button
-                                className="p-[1px] cursor-pointer"
-                                onClick={() => handleRenameCancel(doc.id)}
-                                onMouseDown={(e) => e.preventDefault()} // Prevent input from losing focus
-                              >
-                                <X className="text-red-400 size-5" />
-                              </button>
-                            </>
-                          )}
-                        </SidebarMenuItem>
-                      </>
+                        <button
+                          className="p-[1px] cursor-pointer"
+                          onClick={() => handleRenameCancel(doc.id)}
+                          onMouseDown={(e) => e.preventDefault()}
+                        >
+                          <X className="text-red-400 size-5" />
+                        </button>
+                      </SidebarMenuItem>
                     ) : (
-                      <>
-                        <SidebarMenuItem
-                          key={doc.id}
-                          className={`cursor-pointer group rounded-lg ${
-                            selectedId === doc.id
-                              ? "bg-accent text-accent-foreground font-medium"
-                              : ""
-                          }`}
-                        >
-                          <SidebarMenuButton asChild>
-                            <div className="flex items-center justify-between w-full">
-                              <span
-                                onClick={() =>
-                                  window.history.replaceState(
-                                    null,
-                                    "",
-                                    `/editor?id=${doc.id}`
-                                  )
-                                }
-                                className={`flex-1 truncate`}
+                      <SidebarMenuItem
+                        key={doc.id}
+                        className={`cursor-pointer group rounded-lg ${
+                          selectedId === doc.id
+                            ? "bg-accent text-accent-foreground font-medium"
+                            : ""
+                        }`}
+                      >
+                        <SidebarMenuButton asChild>
+                          <div className="flex items-center justify-between w-full">
+                            <span
+                              onClick={() =>
+                                window.history.replaceState(
+                                  null,
+                                  "",
+                                  `/editor?id=${doc.id}`
+                                )
+                              }
+                              className={`flex-1 truncate`}
+                            >
+                              {doc.title}
+                            </span>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                asChild
+                                className="cursor-pointer"
                               >
-                                {doc.title}
-                              </span>
-
-                              <DropdownMenu>
-                                <DropdownMenuTrigger
-                                  asChild
-                                  className="cursor-pointer"
+                                <button
+                                  className="opacity-100 group-hover:opacity-100 p-1 hover:bg-accent rounded transition-opacity"
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  <button
-                                    className="opacity-100 group-hover:opacity-100 p-1 hover:bg-accent rounded transition-opacity"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem className="cursor-pointer"
-                                    onClick={() =>
-                                      handleRename(doc.id, doc.title)
-                                    }
-                                  >
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Rename
-                                  </DropdownMenuItem>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <DropdownMenuItem
-
-                                        onSelect={(e) => e.preventDefault()}
-                                        className="text-destructive cursor-pointer"
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  className="cursor-pointer"
+                                  onClick={() =>
+                                    handleRename(doc.id, doc.title)
+                                  }
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Rename
+                                </DropdownMenuItem>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem
+                                      onSelect={(e) => e.preventDefault()}
+                                      className="text-destructive cursor-pointer"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Delete Document
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete
+                                        {doc.title}? This action cannot be
+                                        undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Cancel
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDelete(doc.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                       >
-                                        <Trash2 className="mr-2 h-4 w-4" />
                                         Delete
-                                      </DropdownMenuItem>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>
-                                          Delete Document
-                                        </AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Are you sure you want to delete
-                                          {doc.title}? This action cannot be
-                                          undone.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>
-                                          Cancel
-                                        </AlertDialogCancel>
-                                        <AlertDialogAction
-                                          onClick={() => handleDelete(doc.id)}
-                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                        >
-                                          {isDeleting ? (
-                                            <>
-                                              <Loader2 className="animate-spin size-4" />
-                                            </>
-                                          ) : (
-                                            <>{"Delete"}</>
-                                          )}
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      </>
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                     )}
                   </div>
                 ))

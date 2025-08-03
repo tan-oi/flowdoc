@@ -122,7 +122,14 @@ const Tiptap = ({  data }: { data: any }) => {
           "prose prose-md dark:prose-invert text-primary dark:text-gray-50/80 max-w-none focus:outline-none h-full px-4 py-6 overflow-y-auto scrollbar-thin break-words tracking-wider",
       },
       handleDOMEvents: {
-        keydown: (_, event) => enableKeyboardNavigation(event),
+        keydown: (_, event) => {
+          if (event.key === 'Tab') {
+            event.preventDefault();
+            console.log("tab was clicked")
+            return false;
+          }
+          return enableKeyboardNavigation(event);
+        },
       },
     },
     content: data || null,
