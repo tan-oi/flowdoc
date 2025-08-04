@@ -1,4 +1,4 @@
-import { TextOverlayAi } from "@/components/ai-text-overlay";
+import  TextOverlayAi from "@/components/ai-text-overlay";
 import { LeftSideBar } from "@/components/left-sidebar";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";

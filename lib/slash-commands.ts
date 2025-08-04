@@ -18,6 +18,7 @@ import { useOverlayInputStore } from "@/store/useEditorAIStore";
 
 export interface Command {
   title: string;
+  tooltip?: string;
   searchTerms: string[];
   icon: LucideIcon;
   command: ({ editor, range }: { editor: Editor; range: unknown }) => void;
@@ -25,7 +26,7 @@ export interface Command {
 
 export const suggestionItems = createSuggestionsItems([
   {
-    title: "Add content",
+    title: "Add/Replace content",
     searchTerms: ["ai", "llm", "ml", "auto"],
     icon: Pen,
     command: ({ editor, range }) => {
@@ -37,16 +38,14 @@ export const suggestionItems = createSuggestionsItems([
       console.log(start);
       useOverlayInputStore
         .getState()
-        .showInput({ x: start.left, y: start.top }, editor, 'static');
+        .showInput({ x: start.left, y: start.top }, editor, "static");
     },
   },
   {
-    title : "Add live block",
-    searchTerms : ["live","auto","reactive","reupdate"],
-    icon : StarsIcon, 
-    command : ({
-      editor, range
-    }) => {
+    title: "Add Reactive block",
+    searchTerms: ["auto", "reactive", "reupdate"],
+    icon: StarsIcon,
+    command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).run();
 
       const { view } = editor;
@@ -55,11 +54,12 @@ export const suggestionItems = createSuggestionsItems([
       console.log(start);
       useOverlayInputStore
         .getState()
-        .showInput({ x: start.left, y: start.top }, editor, "reactive")
+        .showInput({ x: start.left, y: start.top }, editor, "reactive");
     },
   },
   {
     title: "Text",
+
     searchTerms: ["p", "paragraph"],
     icon: Text,
     command: ({ editor, range }) => {
@@ -71,14 +71,15 @@ export const suggestionItems = createSuggestionsItems([
         .run();
     },
   },
-  {
-    title: "To-do List",
-    searchTerms: ["todo", "task", "list", "check", "checkbox"],
-    icon: CheckSquare,
-    command: ({ }) => {
-      // editor.chain().focus().deleteRange(range).toggleTaskList().run();
-    },
-  },
+  // {
+  //   title: "To-do List",
+  //   tooltip: "Create a checklist with checkboxes",
+  //   searchTerms: ["todo", "task", "list", "check", "checkbox"],
+  //   icon: CheckSquare,
+  //   command: ({ }) => {
+  //     // editor.chain().focus().deleteRange(range).toggleTaskList().run();
+  //   },
+  // },
   {
     title: "Heading 1",
     searchTerms: ["h1", "header", "large"],

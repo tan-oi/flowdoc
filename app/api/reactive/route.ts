@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const systemPrompt = Buffer.from(process.env.REACTIVITY_SYSTEM_PROMPT_BASE64 || "", "base64").toString("utf-8");
   console.log(systemPrompt);
   const { text } = await generateText({
-    model: google("gemini-2.5-flash-lite-preview-06-17"),
+    model: google("gemini-2.5-flash-lite"),
     system: systemPrompt,
     messages: [
       {

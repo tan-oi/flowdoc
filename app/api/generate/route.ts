@@ -42,9 +42,9 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("the type in the api route is", type);
-    // const schemeToBe =
-    //   type === "static" ? staticBlockSchema : reactiveBlockSchema;
+    console.log("the type in the api route is");
+
+    const modeltobeUsed = process.env.MODEL_NAME || "gemini-2.5-flash";
     const limitedMessages = messages.slice(-10);
     console.log(limitedMessages);
     const staticPrompt = Buffer.from(
@@ -56,12 +56,14 @@ export async function POST(req: Request) {
       "base64"
     ).toString("utf-8");
     const result = await generateObject({
-      model: google("gemini-2.5-flash"),
+      model: google(modeltobeUsed),
+      temperature: 0.5,
       schema:
         type === "static" ? staticBlockSchema : (reactiveBlockSchema as any),
       system: type === "static" ? staticPrompt : reactivePrompt,
       messages: limitedMessages,
     });
+
     return result.toJsonResponse();
   } catch (err) {
     console.log(err);

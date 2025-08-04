@@ -25,7 +25,7 @@ export interface BlockInfo {
   content: string;
 }
 
-export function TextOverlayAi() {
+export default function TextOverlayAi() {
   const id = useSearchParams().get("id");
   const [input, setInput] = useState<string>("");
   const [messages, setMessages] = useState<any[]>([]);
@@ -36,28 +36,26 @@ export function TextOverlayAi() {
   const blocksRef = useRef(new Map<string, BlockInfo>());
   const docId = useHistoryState((s) => s.activeDocId);
   const addEntry = useHistoryState((s) => s.addBatchedEntry);
-  const { submit,  isLoading } = useObject({
-    id : id as string,
+  const { submit, isLoading } = useObject({
+    id: id as string,
     api: "/api/generate",
- 
-    schema: type === "static" ? staticBlockSchema : reactiveBlockSchema as any,
+
+    schema:
+      type === "static" ? staticBlockSchema : (reactiveBlockSchema as any),
     onFinish: (result) => {
       console.log(result.object);
 
       // @ts-nocheck
-      const obj = result.object as any
+      const obj = result.object as any;
       addEntry(docId as string, {
         prompt: input,
-      
+
         content: obj?.content as string,
         createdAt: new Date().toISOString(),
-     
+
         type: obj?.chartType
           ? "chart"
-      
-          : obj?.operation === "insertReactive" ||
-
-          obj?.dependencyScope
+          : obj?.operation === "insertReactive" || obj?.dependencyScope
           ? "reactive"
           : "text",
       });
@@ -67,7 +65,7 @@ export function TextOverlayAi() {
         ...prev,
         {
           role: "assistant" as const,
-          
+
           content: obj?.content,
         },
       ]);
@@ -82,9 +80,9 @@ export function TextOverlayAi() {
       );
     },
     onError(error) {
-      console.log(error)
-      toast.error("Failed to generate!")
-    }
+      console.log(error);
+      toast.error("Failed to generate!");
+    },
   });
   useEffect(() => {
     if (show && textareaRef.current) {
@@ -158,7 +156,7 @@ export function TextOverlayAi() {
     const allMessages = [...messages, newUserMessage];
     setMessages(allMessages);
 
-    submit({ messages: allMessages, type : type });
+    submit({ messages: allMessages, type: type });
     // setInput("");
   };
 
@@ -202,12 +200,23 @@ export function TextOverlayAi() {
           maxWidth: 900,
         }}
       >
-        <div className="bg-secondary rounded-md shadow-lg border border-border flex flex-col w-full p-0">
+        <div className="bg-secondary rounded-md shadow-lg border border-border flex flex-col gap-1 w-full p-0">
           <div className="flex items-center justify-between px-3 pt-3 pb-1">
-            <span className="text-foreground font-medium text-sm">
-              Ask AI to insert content
+            <span className="text-neutral-300 font-medium text-sm">
+              {type === "static" ? (
+                " Insert/Replace content for you"
+              ) : (
+                <>
+                  Add a reactive block{" "}
+                  <p className="text-neutral-500 mt-[3px]">
+                    💡 Works with document context - asking for external info
+                    may give wrong results
+                  </p>
+                </>
+              )}
             </span>
           </div>
+
           <div className="flex flex-row items-end px-3 pb-3 gap-2">
             <Textarea
               ref={textareaRef}
@@ -221,7 +230,6 @@ export function TextOverlayAi() {
               <Send className="size-4" />
             </Button>
           </div>
-        
         </div>
       </div>
     ),
