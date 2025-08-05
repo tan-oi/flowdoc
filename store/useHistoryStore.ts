@@ -2,12 +2,7 @@
 
 import { create } from 'zustand'
 
-export interface DocumentEntry {
-  prompt: string;
-  content: string;
-  createdAt: any;
-  type : "text" | "chart" | "reactive"
-}
+import { DocumentEntry } from '@/lib/types';
 
 interface DocumentStore {
   

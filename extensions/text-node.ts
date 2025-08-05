@@ -2,19 +2,8 @@
   import type { Command } from "@tiptap/core";
   import { ReactNodeViewRenderer } from "@tiptap/react";
   import { TextView } from "./views/text-view";
+  import { InsertTextNodeOptions } from "@/lib/types";
 
-  interface InsertTextNodeOptions {
-    id?: string;
-    computedContent?: string;
-    prompt?: string;
-    sourceHash?: string;
-    dependencyHash?: string;
-    dependencyScope?: string;
-    type?: string;
-    status?: string;
-    errorMessage?: string | null;
-    isReactive? : boolean
-  }
 
   declare module "@tiptap/core" {
     interface Commands<ReturnType> {

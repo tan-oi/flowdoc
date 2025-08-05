@@ -35,6 +35,7 @@ export function DocumentPanel({ id }: { id: string }) {
     queryKey: ["doc", "history", `${id}`],
     queryFn: () => fetch(`/api/doc/history/${id}`).then((res) => res.json()),
     staleTime: Infinity,
+    enabled : isOpen
   });
 
   if (isLoading) {

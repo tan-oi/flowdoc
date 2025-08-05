@@ -5,7 +5,8 @@ import { Loader2, PanelRight, SaveIcon } from "lucide-react";
 
 import { useEditorContext } from "./editor-provider";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { DocumentEntry, useHistoryState } from "@/store/useHistoryStore";
+import {  useHistoryState } from "@/store/useHistoryStore";
+import { DocumentEntry } from "@/lib/types";
 import { sha256 } from "js-sha256";
 import { toast } from "sonner";
 import { JSONContent } from "@tiptap/react";

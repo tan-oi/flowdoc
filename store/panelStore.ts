@@ -1,12 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface PanelState {
-  isOpen: boolean;
-  toggle: () => void;
-  open: () => void;
-  close: () => void;
-}
+import { PanelState } from '@/lib/types';
 
 export const usePanelStore = create<PanelState>()(
   persist(

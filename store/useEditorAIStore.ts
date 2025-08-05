@@ -1,20 +1,6 @@
 import { create } from "zustand";
 import { Editor } from "@tiptap/react";
-
-interface Posi {
-  x: number;
-  y: number;
-}
-
-interface InputStore {
-  show: boolean;
-  position: Posi;
-  editor: Editor | null;
-  docsPos: number | null;
-  showInput: (position: Posi, editor: Editor, type: "static" | "reactive") => void;
-  hideInput: () => void;
-  type : "static" | "reactive"
-}
+import { InputStore } from "@/lib/types";
 
 export const useOverlayInputStore = create<InputStore>((set) => ({
   show: false,

@@ -2,19 +2,7 @@ import { Node, mergeAttributes } from "@tiptap/core";
 import type { Command } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { ChartView } from "./views/chart-view";
-
-interface InsertChartNodeOptions {
-  id?: string;
-  computedContent?: [];
-  prompt?: string;
-  sourceHash?: string;
-  dependencyHash?: string;
-  dependencyScope?: string;
-  type?: string;
-  status?: string;
-  errorMessage?: string | null;
-  isReactive? : boolean
-}
+import { InsertChartNodeOptions } from "@/lib/types";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
