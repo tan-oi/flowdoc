@@ -80,7 +80,17 @@ export default function TextOverlayAi() {
       );
     },
     onError(error) {
-      console.log(error);
+      try {
+        const errorData = JSON.parse(error.message);
+
+        if (errorData.error === "daily_limit_exceeded") {
+          toast.error(
+            `Daily limit exceeded (${errorData.used}/${errorData.limit})`
+          );
+          return;
+        }
+      } catch {}
+
       toast.error("Failed to generate!");
     },
   });

@@ -17,11 +17,13 @@
     image         String?
     createdAt     DateTime
     updatedAt     DateTime
+    tier       Tier     @default(free)
+    dailyAllowance Int @default(5)
     sessions      Session[]
     accounts      Account[]
     Document      Document[]
-
-    @@unique([email])
+    dailyLimits UserDailyLimit[] 
+       @@unique([email])
     @@map("user")
   }
 
@@ -114,8 +116,28 @@
     @@map("history")
   }
 
+ model UserDailyLimit {
+  userId     String   
+  date       String  
+  callsUsed  Int      @default(0)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
+  @@unique([userId, date], name: "userId_date")
+  @@index([date])
+  @@map("user_daily_limit")
+}
   enum HistoryType {
     text
     chart
     reactive
+  }
+
+  enum Tier {
+    free
+    paid
   }

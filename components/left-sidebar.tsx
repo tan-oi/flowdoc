@@ -26,6 +26,7 @@ import { DocumentItem } from "./document-item";
 import { AboutDoc, Document } from "@/lib/types";
 
 export function LeftSideBar() {
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("id");
@@ -174,6 +175,7 @@ export function LeftSideBar() {
     return <SidebarShimmer />;
   }
 
+  
   return (
     <Sidebar className="bg-sidebar">
       <SidebarContent className="">
@@ -193,7 +195,7 @@ export function LeftSideBar() {
               Create new
             </Button>
           </SidebarGroupContent>
-        </SidebarGroup>
+      </SidebarGroup>
 
         <SidebarGroup>
           <SidebarGroupLabel>Recent Documents</SidebarGroupLabel>
@@ -246,3 +248,4 @@ export function LeftSideBar() {
     </Sidebar>
   );
 }
+

@@ -4,20 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { apiRateLimiter } from "@/lib/rate-limiter";
+import { useAnalytics } from "@/lib/posthog-server";
 
 interface Docs {
-  prompt : string;
-  content : string;
-  type : "text" | "chart" | "reactive";
-  createdAt : string;
+  prompt: string;
+  content: string;
+  type: "text" | "chart" | "reactive";
+  createdAt: string;
 }
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const  header = await headers();
-  const ip = header.get("x-forwarded-for")
-  
+  const header = await headers();
+  const ip = header.get("x-forwarded-for");
+
   const { success, limit, remaining, reset } = await apiRateLimiter.limit(
     ip ?? "127.0.0.1"
   );
@@ -25,18 +26,20 @@ export async function GET(
   if (!success) {
     const retryAfter = Math.round((reset - Date.now()) / 1000);
 
-    return NextResponse.json({
-      message : "stop spamming mate"
-    }, {
-      status : 429,
-      headers : {
-        "X-RateLimit-Limit": limit.toString(),
-        "X-RateLimit-Remaining": remaining.toString(),
-        "X-RateLimit-Reset": reset.toString(),
-        "Retry-After" : retryAfter.toString()
+    return NextResponse.json(
+      {
+        message: "stop spamming mate",
+      },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+          "Retry-After": retryAfter.toString(),
+        },
       }
-    })
-
+    );
   }
 
   const session = await auth.api.getSession({
@@ -56,34 +59,72 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const  header = await headers();
-  const ip = header.get("x-forwarded-for")
+  const { track, trackError, flush } = useAnalytics();
+  const header = await headers();
+  const ip = header.get("x-forwarded-for");
+  const requestId = crypto.randomUUID();
+
   const { success, limit, remaining, reset } = await apiRateLimiter.limit(
     ip ?? "127.0.0.1"
   );
 
   if (!success) {
     const retryAfter = Math.round((reset - Date.now()) / 1000);
-  
-    return NextResponse.json({
-      message : `you gotta stop spamming bro, try saving again after ${retryAfter.toString()}`, 
-    }, {
-      status : 429,
-      headers : {
-        "X-RateLimit-Limit": limit.toString(),
-        "X-RateLimit-Remaining": remaining.toString(),
-        "X-RateLimit-Reset": reset.toString(),
-        "Retry-After" : retryAfter.toString()
-      }
-    })
 
-  
+    track("rate_limit_hit", "anonymous", {
+      endpoint: "/api/doc/save",
+      ip: ip ?? "127.0.0.1",
+      retry_after: retryAfter,
+      request_id: requestId,
+    });
+
+    await flush();
+
+    return NextResponse.json(
+      {
+        message: `you gotta stop spamming bro, try saving again after ${retryAfter.toString()}`,
+      },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+          "Retry-After": retryAfter.toString(),
+        },
+      }
+    );
   }
 
-  const { history, docState } = await request.json();
-  const { id } = await params;
-
   try {
+    const { history, docState } = await request.json();
+    const { id } = await params;
+
+    const session = await auth.api.getSession({
+      headers: header,
+    });
+
+    if (!session || !session?.user) {
+      await flush();
+      return NextResponse.json(
+        {
+          message: "unauthorized, try logging in!",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    track("document_save_started", session.user.id, {
+      document_id: id,
+      has_content: docState !== null && docState !== undefined,
+      has_history: Array.isArray(history) && history.length > 0,
+      history_count: Array.isArray(history) ? history.length : 0,
+      save_type: "manual",
+      request_id: requestId,
+    });
+
     const promises = [];
 
     if (docState !== null && docState !== undefined) {
@@ -91,10 +132,11 @@ export async function PATCH(
         prisma.document.update({
           where: {
             id,
+            userId: session.user.id,
           },
           data: {
             content: docState,
-            type : "perma"
+            type: "perma",
           },
         })
       );
@@ -124,6 +166,15 @@ export async function PATCH(
       await Promise.all(promises);
     }
 
+    track("document_save_completed", session.user.id, {
+      document_id: id,
+      operations_count: promises.length,
+      save_type: "manual",
+      request_id: requestId,
+    });
+
+    await flush();
+
     return NextResponse.json(
       {
         success: "true",
@@ -133,10 +184,22 @@ export async function PATCH(
       }
     );
   } catch (err) {
+    const session = await auth.api.getSession({
+      headers: header,
+    });
+
+    trackError(err as Error, session?.user?.id || "anonymous", {
+      endpoint: "/api/doc/save",
+      document_id: (await params).id,
+      request_id: requestId,
+    });
+
+    await flush();
+
     return NextResponse.json(
       {
         success: "false",
-        error: err,
+        error: "Failed to save document",
       },
       {
         status: 500,
@@ -149,37 +212,101 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const  header = await headers();
-  const ip = header.get("x-forwarded-for")
-  console.log(ip)
+  const { track, trackError, flush } = useAnalytics();
+  const header = await headers();
+  const ip = header.get("x-forwarded-for");
+  const requestId = crypto.randomUUID();
+
   const { success, limit, remaining, reset } = await apiRateLimiter.limit(
     ip ?? "127.0.0.1"
   );
 
   if (!success) {
     const retryAfter = Math.round((reset - Date.now()) / 1000);
-  
-    return NextResponse.json({
-      message : `You seem to be spamming, try again after a little later after ${retryAfter.toString()}s`
-    }, {
-      status : 429,
-      headers : {
-        "X-RateLimit-Limit": limit.toString(),
-        "X-RateLimit-Remaining": remaining.toString(),
-        "X-RateLimit-Reset": new Date(reset).toISOString(),
-        "Retry-After" : retryAfter.toString()
+
+    track("rate_limit_hit", "anonymous", {
+      endpoint: "/api/doc/delete",
+      ip: ip ?? "127.0.0.1",
+      retry_after: retryAfter,
+      request_id: requestId,
+    });
+
+    await flush();
+
+    return NextResponse.json(
+      {
+        message: `You seem to be spamming, try again after a little later after ${retryAfter.toString()}s`,
+      },
+      {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": limit.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": reset.toString(),
+          "Retry-After": retryAfter.toString(),
+        },
       }
-    })
-   
+    );
   }
 
-  const { id } = await params;
+  try {
+    const { id } = await params;
+    const session = await auth.api.getSession({
+      headers: header,
+    });
 
-   await prisma.document.delete({
-    where: {
-      id,
-    },
-  });
+    if (!session || !session?.user) {
+      await flush();
+      return NextResponse.json(
+        {
+          message: "unauthorized, try logging in!",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
 
-  return NextResponse.json("success : true");
+    track("delete_document_started", session.user.id, {
+      document_id: id,
+      request_id: requestId,
+    });
+
+    await prisma.document.delete({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    track("delete_document_completed", session.user.id, {
+      document_id: id,
+      request_id: requestId,
+    });
+
+    await flush();
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    const session = await auth.api.getSession({
+      headers: header,
+    });
+
+    trackError(err as Error, session?.user?.id || "anonymous", {
+      endpoint: "/api/doc/delete",
+      document_id: (await params).id,
+      request_id: requestId,
+    });
+
+    await flush();
+
+    return NextResponse.json(
+      {
+        message: "Failed to delete document",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }

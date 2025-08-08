@@ -5,13 +5,14 @@ import { Loader2, PanelRight, SaveIcon } from "lucide-react";
 
 import { useEditorContext } from "./editor-provider";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {  useHistoryState } from "@/store/useHistoryStore";
+import { useHistoryState } from "@/store/useHistoryStore";
 import { DocumentEntry } from "@/lib/types";
 import { sha256 } from "js-sha256";
 import { toast } from "sonner";
 import { JSONContent } from "@tiptap/react";
 import { DisabledSave } from "./disabled-autosave";
 import { usePanelStore } from "@/store/panelStore";
+import { posthog } from "posthog-js";
 
 interface ToolbarProps {
   children?: React.ReactNode;
@@ -35,7 +36,11 @@ export function Toolbar({ children, id }: ToolbarProps) {
   }, [editor]);
 
   const { mutate: saveDocument, isPending: isSaving } = useMutation({
-    mutationFn: async (data: { id: any; entries: DocumentEntry[] | null; editorState: JSONContent | null }) => {
+    mutationFn: async (data: {
+      id: any;
+      entries: DocumentEntry[] | null;
+      editorState: JSONContent | null;
+    }) => {
       console.log(id);
       const res = await fetch(`/api/doc/${data.id}`, {
         method: "PATCH",
@@ -52,11 +57,16 @@ export function Toolbar({ children, id }: ToolbarProps) {
     onSuccess(data, variables) {
       console.log(data);
       console.log(variables);
-      qc.setQueryData<DocumentEntry[] | null>(["doc", "history", `${variables.id}`], (oldData) => {
-        const currentData = Array.isArray(oldData) ? oldData : [];
-        const newData = Array.isArray(variables.entries) ? variables.entries : []
-        return [...currentData, ...newData];
-      });
+      qc.setQueryData<DocumentEntry[] | null>(
+        ["doc", "history", `${variables.id}`],
+        (oldData) => {
+          const currentData = Array.isArray(oldData) ? oldData : [];
+          const newData = Array.isArray(variables.entries)
+            ? variables.entries
+            : [];
+          return [...currentData, ...newData];
+        }
+      );
 
       useHistoryState.getState().clearBatchedEntries(variables.id);
     },
@@ -116,7 +126,7 @@ export function Toolbar({ children, id }: ToolbarProps) {
     <div className="flex items-center justify-between gap-2 p-[8px] backdrop-blur-md border-b border-neutral-800 bg-transparent">
       <div className="flex items-center">{children}</div>
 
-    <DisabledSave/>
+      <DisabledSave />
       <div className="flex items-center gap-2">
         <Button
           size={"sm"}
@@ -137,9 +147,9 @@ export function Toolbar({ children, id }: ToolbarProps) {
           )}
         </Button>
 
-          <Button variant={"ghost"} size={"sm"} onClick={toggle}>
-            <PanelRight/>
-          </Button>
+        <Button variant={"ghost"} size={"sm"} onClick={toggle}>
+          <PanelRight />
+        </Button>
 
         <div className="font-mono text-xs font-extralight"></div>
       </div>

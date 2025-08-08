@@ -1,3 +1,6 @@
+import { auth } from "@/auth";
+import { checkDailyLimit, incrementUsage } from "@/lib/daily-limit";
+import { useAnalytics } from "@/lib/posthog-server";
 import { generateLLMLimiter } from "@/lib/rate-limiter";
 import { reactiveBlockSchema, staticBlockSchema } from "@/lib/schema";
 import { google } from "@ai-sdk/google";
@@ -6,14 +9,24 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  console.log(process.env.STATIC_SYSTEM_PROMPT);
   const header = await headers();
+  const { flush, track, trackError } = useAnalytics();
   const ip = header.get("x-forwarded-for");
+  const requestId = crypto.randomUUID();
   const { success, limit, remaining, reset } = await generateLLMLimiter.limit(
     ip ?? "127.0.0.1"
   );
   if (!success) {
     const retryAfter = Math.round((reset - Date.now()) / 1000);
+
+    track("rate_limit_hit", "anonymous", {
+      endpoint: "/api/document/rename",
+      ip: ip ?? "127.0.0.1",
+      retry_after: retryAfter,
+      request_id: requestId,
+    });
+
+    await flush();
 
     return NextResponse.json(
       {
@@ -42,11 +55,49 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("the type in the api route is");
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      return NextResponse.json(
+        {
+          message: "unauthorized",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    const limitCheck = await checkDailyLimit(session?.user.id);
+
+    if (!limitCheck.ok) {
+      track("daily_limit_hit", session?.user?.id, {
+        limit: limitCheck.limit,
+      });
+
+      flush();
+      return NextResponse.json(
+        {
+          error: "daily_limit_exceeded",
+          message: limitCheck.error || "Daily limit exhausted",
+          used: limitCheck.used,
+          limit: limitCheck.limit,
+        },
+        { status: 429 }
+      );
+    }
 
     const modeltobeUsed = process.env.MODEL_NAME || "gemini-2.5-flash";
     const limitedMessages = messages.slice(-10);
-    console.log(limitedMessages);
+
+    track("llm_call_start", session.user.id, {
+      model: modeltobeUsed,
+      type: type,
+      messageLength: limitedMessages.length,
+    });
+
     const staticPrompt = Buffer.from(
       process.env.STATIC_SYSTEM_PROMPT_BASE64 || "",
       "base64"
@@ -62,11 +113,41 @@ export async function POST(req: Request) {
         type === "static" ? staticBlockSchema : (reactiveBlockSchema as any),
       system: type === "static" ? staticPrompt : reactivePrompt,
       messages: limitedMessages,
+      experimental_repairText: async (option) => {
+        const cleaned = option.text
+          .replace(/^```json\s*/i, "")
+          .replace(/```$/, "")
+          .trim();
+
+        console.log("cleaned", cleaned);
+        return cleaned;
+      },
     });
 
+    track("llm_call_finished", session.user.id, {
+      model: modeltobeUsed,
+      type,
+      content: result?.object,
+      finishReason: result?.finishReason,
+      tokensCount: result.usage,
+    });
+
+    flush();
+    incrementUsage(session.user.id);
     return result.toJsonResponse();
   } catch (err) {
     console.log(err);
+
+    trackError(err as Error, "id", {
+      endpoint: "/api/generate",
+      //@ts-ignore
+      errCause: err?.cause?.name,
+      //@ts-ignore
+      finishReason: err?.finishReason,
+      //@ts-ignore
+      usage: err?.usage,
+    });
+
     return NextResponse.json(
       {
         message: "Something went wrong",
