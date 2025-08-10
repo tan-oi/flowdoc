@@ -11,7 +11,7 @@ interface Analytics {
  flush: () => Promise<void>
 }
 
-export function useAnalytics(): Analytics {
+export function createAnalytics(): Analytics {
  const posthog = PostHogClient()
  
  return {

@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { useAnalytics } from "@/lib/posthog-server";
+import { createAnalytics } from "@/lib/posthog-server";
 import { prisma } from "@/lib/prisma";
 import { apiRateLimiter } from "@/lib/rate-limiter";
 import { headers } from "next/headers";
@@ -10,7 +10,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { track, trackError, flush } = useAnalytics();
+  const { track, trackError, flush } = createAnalytics();
   const header = await headers();
   const ip = header.get("x-forwarded-for");
   const requestId = crypto.randomUUID();
@@ -72,7 +72,7 @@ export async function PATCH(
     const updateTitle = await prisma.document.update({
       where: {
         id: id,
-        userId: "123",
+        userId : session?.user?.id,
       },
       data: {
         title: title.trim(),

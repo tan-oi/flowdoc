@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { apiRateLimiter } from "@/lib/rate-limiter";
-import { useAnalytics } from "@/lib/posthog-server";
+import { createAnalytics } from "@/lib/posthog-server";
 
 interface Docs {
   prompt: string;
@@ -59,7 +59,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { track, trackError, flush } = useAnalytics();
+  const { track, trackError, flush } = createAnalytics();
   const header = await headers();
   const ip = header.get("x-forwarded-for");
   const requestId = crypto.randomUUID();
@@ -212,7 +212,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { track, trackError, flush } = useAnalytics();
+  const { track, trackError, flush } = createAnalytics();
   const header = await headers();
   const ip = header.get("x-forwarded-for");
   const requestId = crypto.randomUUID();

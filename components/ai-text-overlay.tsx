@@ -88,6 +88,9 @@ export default function TextOverlayAi() {
             `Daily limit exceeded (${errorData.used}/${errorData.limit})`
           );
           return;
+        } else {
+          toast.error(errorData.message);
+          return;
         }
       } catch {}
 

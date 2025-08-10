@@ -31,7 +31,6 @@ import DOMPurify from "dompurify";
 import { SANITIZE_CONFIG } from "./safe-html";
 
 const Tiptap = ({  data }: { data: any }) => {
-  // const { triggerNavigation, docId } = useEditorId(id);
   const [sent,setSent] = useState(false);
 
   const nanoid = customAlphabet(

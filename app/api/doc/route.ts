@@ -1,12 +1,12 @@
 import { auth } from "@/auth";
 import { createTempDocument } from "@/lib/functions/document";
-import { useAnalytics } from "@/lib/posthog-server";
+import { createAnalytics } from "@/lib/posthog-server";
 import { apiRateLimiter } from "@/lib/rate-limiter";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function POST() {
-  const { track, trackError, flush } = useAnalytics();
+  const { track, trackError, flush } = createAnalytics();
   const header = await headers();
   const ip = header.get("x-forwarded-for");
   const requestId = crypto.randomUUID();

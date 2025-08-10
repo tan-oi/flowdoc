@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { checkDailyLimit, incrementUsage } from "@/lib/daily-limit";
-import { useAnalytics } from "@/lib/posthog-server";
+import { createAnalytics } from "@/lib/posthog-server";
 import { generateLLMLimiter } from "@/lib/rate-limiter";
 import { reactiveBlockSchema, staticBlockSchema } from "@/lib/schema";
 import { google } from "@ai-sdk/google";
@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   const header = await headers();
-  const { flush, track, trackError } = useAnalytics();
+  const { flush, track, trackError } = createAnalytics();
   const ip = header.get("x-forwarded-for");
   const requestId = crypto.randomUUID();
   const { success, limit, remaining, reset } = await generateLLMLimiter.limit(
@@ -26,10 +26,11 @@ export async function POST(req: Request) {
       request_id: requestId,
     });
 
-    await flush();
+    flush();
 
     return NextResponse.json(
       {
+        error : "api_abuse",
         message: `Chillax dude, take a breather, try again in like ${retryAfter.toString()}s`,
       },
       {
@@ -55,23 +56,25 @@ export async function POST(req: Request) {
       );
     }
 
+    console.time("getSession");
     const session = await auth.api.getSession({
       headers: await headers(),
     });
-
+    console.timeEnd("getSession");
     if (!session) {
       return NextResponse.json(
         {
           message: "unauthorized",
         },
-        {
+        { 
           status: 401,
         }
       );
     }
 
+    console.time("checkDailyLimit");
     const limitCheck = await checkDailyLimit(session?.user.id);
-
+    console.timeEnd("checkDailyLimit");
     if (!limitCheck.ok) {
       track("daily_limit_hit", session?.user?.id, {
         limit: limitCheck.limit,
@@ -140,11 +143,11 @@ export async function POST(req: Request) {
 
     trackError(err as Error, "id", {
       endpoint: "/api/generate",
-      //@ts-ignore
+      //@ts-expect-error "idk"
       errCause: err?.cause?.name,
-      //@ts-ignore
+      //@ts-expect-error "idk"
       finishReason: err?.finishReason,
-      //@ts-ignore
+      //@ts-expect-error "idk"
       usage: err?.usage,
     });
 
