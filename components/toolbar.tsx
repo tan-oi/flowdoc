@@ -12,7 +12,8 @@ import { toast } from "sonner";
 import { JSONContent } from "@tiptap/react";
 import { DisabledSave } from "./disabled-autosave";
 import { usePanelStore } from "@/store/panelStore";
-import { posthog } from "posthog-js";
+import { authClient } from "@/lib/auth-client";
+import { useAutoSave } from "./auto-save";
 
 interface ToolbarProps {
   children?: React.ReactNode;
@@ -25,7 +26,17 @@ export function Toolbar({ children, id }: ToolbarProps) {
   const { editor } = useEditorContext();
 
   const qc = useQueryClient();
+
+  const { data: session } = authClient.useSession();
+
   const { toggle } = usePanelStore();
+
+  // useAutoSave({
+  //   documentId: id,
+  //   userId : session?.user?.id,
+  //   editor
+  // })
+    
   useEffect(() => {
     if (editor && previousSaveRef.current === null) {
       const initialText = editor.getText();
@@ -41,7 +52,6 @@ export function Toolbar({ children, id }: ToolbarProps) {
       entries: DocumentEntry[] | null;
       editorState: JSONContent | null;
     }) => {
-      console.log(id);
       const res = await fetch(`/api/doc/${data.id}`, {
         method: "PATCH",
         headers: {
@@ -52,9 +62,12 @@ export function Toolbar({ children, id }: ToolbarProps) {
           docState: data.editorState,
         }),
       });
+      if (!res.ok) throw new Error("Couldnt");
       return res.json();
     },
-    onSuccess(data, variables) {
+
+    onSuccess(data, variables, context) {
+      console.log(context);
       console.log(data);
       console.log(variables);
       qc.setQueryData<DocumentEntry[] | null>(
@@ -68,7 +81,18 @@ export function Toolbar({ children, id }: ToolbarProps) {
         }
       );
 
+      qc.setQueryData(
+        ["editor-setup", `${variables.id}`, `${session?.user?.id}`],
+        (oldData) => {
+          console.log(oldData);
+        }
+      );
       useHistoryState.getState().clearBatchedEntries(variables.id);
+    },
+    onError(data, variables) {
+      toast.error("Couldnt save");
+      console.log(data);
+      console.log(variables);
     },
   });
 
@@ -146,6 +170,7 @@ export function Toolbar({ children, id }: ToolbarProps) {
             </>
           )}
         </Button>
+
 
         <Button variant={"ghost"} size={"sm"} onClick={toggle}>
           <PanelRight />

@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        error : "api_abuse",
+        error: "api_abuse",
         message: `Chillax dude, take a breather, try again in like ${retryAfter.toString()}s`,
       },
       {
@@ -45,7 +45,8 @@ export async function POST(req: Request) {
     );
   }
   try {
-    const { messages, type } = await req.json();
+    const { messages, type, id } = await req.json();
+
     if (!messages || !type) {
       return NextResponse.json(
         {
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
         {
           message: "unauthorized",
         },
-        { 
+        {
           status: 401,
         }
       );
@@ -94,7 +95,6 @@ export async function POST(req: Request) {
 
     const modeltobeUsed = process.env.MODEL_NAME || "gemini-2.5-flash";
     const limitedMessages = messages.slice(-10);
-
     track("llm_call_start", session.user.id, {
       model: modeltobeUsed,
       type: type,
@@ -122,10 +122,10 @@ export async function POST(req: Request) {
           .replace(/```$/, "")
           .trim();
 
-        console.log("cleaned", cleaned);
         return cleaned;
       },
     });
+    console.timeEnd("llm_inference");
 
     track("llm_call_finished", session.user.id, {
       model: modeltobeUsed,

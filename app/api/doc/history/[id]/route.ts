@@ -22,6 +22,9 @@ export async function GET(req: Request, { params }: {
         const history = await prisma.history.findMany({
             where: {
                 docId: id
+            },
+            orderBy : {
+                createdAt : "asc"
             }
         })
     

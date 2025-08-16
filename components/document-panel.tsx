@@ -6,11 +6,13 @@ import { useShallow } from "zustand/shallow";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { formatTimestamp } from "@/lib/functions/calculateTime";
 import { SafeHtml } from "./safe-html";
-import { Clipboard, Clock, Expand } from "lucide-react";
+import { Clipboard, Clock, Expand, BarChart3, PieChart } from "lucide-react";
 import { Button } from "./ui/button";
 import { usePanelStore } from "@/store/panelStore";
 import { AnimatePresence, motion } from "motion/react";
 import { toast } from "sonner";
+import { BarChartComponent } from "./bar-chart";
+import { PieChartComponent } from "./pie-chart";
 
 export function DocumentPanel({ id }: { id: string }) {
   const setActiveDocument = useHistoryState((s) => s.setActiveDocument);
@@ -20,6 +22,7 @@ export function DocumentPanel({ id }: { id: string }) {
     content: string;
     prompt: string;
     createdAt: string;
+    type?: string;
   }>(null);
 
   const entries = useHistoryState(
@@ -58,7 +61,6 @@ export function DocumentPanel({ id }: { id: string }) {
   }
 
   const totalHistory = [...(data ?? []), ...entries];
-
   return (
     <>
       <motion.div
@@ -156,10 +158,52 @@ export function DocumentPanel({ id }: { id: string }) {
                           <p className="break-words sm:text-[14px] md:text-md font-medium text-bold line-clamp-1">
                             {h.prompt}
                           </p>
-                          <SafeHtml
-                            html={h.content}
-                            className="sm:text-[13px] md:text-[16px] text-primary/70 line-clamp-4 leading-relaxed"
-                          />
+                          {h.type === "bar" || h.type === "pie" ? (
+                            <div className=" q">
+                              {(() => {
+                                try {
+                                  const chartData = JSON.parse(h.content);
+                                  if (h.type === "bar") {
+                                    return (
+                                      <BarChartComponent
+                                        chartData={chartData}
+                                        compact={true}
+                                      />
+                                    );
+                                  } else if (h.type === "pie") {
+                                    return (
+                                      <PieChartComponent
+                                        chartData={chartData}
+                                        compact={true}
+                                      />
+                                    );
+                                  }
+                                } catch (error) {
+                                  console.error(
+                                    "Failed to parse chart data:",
+                                    error
+                                  );
+                                  return (
+                                    <div className="flex items-center gap-2 text-sm text-red-500">
+                                      {h.type === "bar" ? (
+                                        <BarChart3 className="w-4 h-4" />
+                                      ) : (
+                                        <PieChart className="w-4 h-4" />
+                                      )}
+                                      <span>Invalid chart data</span>
+                                    </div>
+                                  );
+                                }
+                              })()}
+                            </div>
+                          ) : (
+                            <>
+                              <SafeHtml
+                                html={h.content}
+                                className="sm:text-[13px] md:text-[16px] text-primary/70 line-clamp-4 leading-relaxed"
+                              />
+                            </>
+                          )}
                         </div>
                       </motion.div>
                     ))}
@@ -199,10 +243,34 @@ export function DocumentPanel({ id }: { id: string }) {
                 </Button>
               </div>
               <p className="text-lg font-semibold">{expandedEntry.prompt}</p>
-              <SafeHtml
-                html={expandedEntry.content}
-                className="text-neutral-500  max-w-none"
-              />
+              {expandedEntry.type === "bar" || expandedEntry.type === "pie" ? (
+                <div className="w-full">
+                  {(() => {
+                    try {
+                      const chartData = JSON.parse(expandedEntry.content);
+                      if (expandedEntry.type === "bar") {
+                        return <BarChartComponent chartData={chartData} />;
+                      } else if (expandedEntry.type === "pie") {
+                        return <PieChartComponent chartData={chartData} />;
+                      }
+                    } catch (error) {
+                      console.error("Failed to parse chart data:", error);
+                      return (
+                        <div className="flex items-center justify-center p-8 border-2 border-dashed border-red-300 rounded-lg">
+                          <p className="text-red-500">
+                            Invalid chart data format
+                          </p>
+                        </div>
+                      );
+                    }
+                  })()}
+                </div>
+              ) : (
+                <SafeHtml
+                  html={expandedEntry.content}
+                  className="text-neutral-500 max-w-none"
+                />
+              )}
             </motion.div>
           </motion.div>
         )}

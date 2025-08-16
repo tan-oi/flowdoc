@@ -133,6 +133,8 @@
 }
   enum HistoryType {
     text
+    bar
+    pie
     chart
     reactive
   }

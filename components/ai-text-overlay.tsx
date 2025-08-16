@@ -30,12 +30,22 @@ export default function TextOverlayAi() {
   const [input, setInput] = useState<string>("");
   const [messages, setMessages] = useState<any[]>([]);
   const { show, editor, docsPos, hideInput, type } = useOverlayInputStore();
-  // const docId = useHistoryState(s => s.activeDocId)
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const blocksRef = useRef(new Map<string, BlockInfo>());
   const docId = useHistoryState((s) => s.activeDocId);
+  const [prevDocId, setPrevDocId] = useState(docId);
+
   const addEntry = useHistoryState((s) => s.addBatchedEntry);
+
+  useEffect(() => {
+    if (prevDocId && docId && prevDocId !== docId) {
+      console.log("Document changed, clearing conversation context");
+      setMessages([]);
+    }
+    setPrevDocId(docId);
+  }, [docId, prevDocId]);
+
   const { submit, isLoading } = useObject({
     id: id as string,
     api: "/api/generate",
@@ -49,12 +59,12 @@ export default function TextOverlayAi() {
       const obj = result.object as any;
       addEntry(docId as string, {
         prompt: input,
-
+        
         content: obj?.content as string,
         createdAt: new Date().toISOString(),
 
         type: obj?.chartType
-          ? "chart"
+          ? obj?.chartType
           : obj?.operation === "insertReactive" || obj?.dependencyScope
           ? "reactive"
           : "text",
@@ -244,6 +254,7 @@ export default function TextOverlayAi() {
             </Button>
           </div>
         </div>
+        <div></div>
       </div>
     ),
     document.body

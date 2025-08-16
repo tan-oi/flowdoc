@@ -9,24 +9,44 @@ export async function POST(request: NextRequest) {
     headers: await headers(),
   });
   let document = null;
-
   const userId = session?.user?.id as string;
   try {
     if (requestedId) {
       document = await getDocument(userId, requestedId);
+
+      if (!document)
+        return NextResponse.json(
+          {
+            error: "Document not found!",
+            notFound: true,
+          },
+          {
+            status: 404,
+          }
+        );
+
+      return NextResponse.json({
+        correctId: document.id,
+        document: document,
+        isFirstDocument: false,
+      });
     }
 
-    if (!document) {
-      document = await getDocument(userId, undefined);
+    const recentDocument = await getDocument(userId, undefined);
 
-      if (!document) {
-        document = await createTempDocument(userId);
-      }
+    if (recentDocument) {
+      return NextResponse.json({
+        correctId: recentDocument.id,
+        document: recentDocument,
+        isFirstDocument: false,
+      });
     }
 
+    const createNewDocument = await createTempDocument(userId);
     return NextResponse.json({
-      correctId: document.id,
-      document: document,
+      correctId: createNewDocument.id,
+      document: createNewDocument,
+      isFirstDocument: true,
     });
   } catch (error) {
     console.error("Error in editor setup:", error);
@@ -35,6 +55,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       correctId: tempDoc.id,
       document: tempDoc,
+      isFirstDocument: true,
     });
   }
 }
