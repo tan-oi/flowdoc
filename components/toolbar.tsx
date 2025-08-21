@@ -13,7 +13,7 @@ import { JSONContent } from "@tiptap/react";
 import { DisabledSave } from "./disabled-autosave";
 import { usePanelStore } from "@/store/panelStore";
 import { authClient } from "@/lib/auth-client";
-import { useAutoSave } from "./auto-save";
+
 
 interface ToolbarProps {
   children?: React.ReactNode;
