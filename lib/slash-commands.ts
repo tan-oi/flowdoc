@@ -12,19 +12,18 @@ import {
   Pen,
   StarsIcon,
 } from "lucide-react";
-import { createSuggestionsItems } from "@harshtalks/slash-tiptap";
 import { Editor } from "@tiptap/core";
 import { useOverlayInputStore } from "@/store/useEditorAIStore";
 
-export interface Command {
+export interface SlashCommand {
   title: string;
   tooltip?: string;
   searchTerms: string[];
   icon: LucideIcon;
-  command: ({ editor, range }: { editor: Editor; range: unknown }) => void;
+  command: ({ editor, range }: { editor: Editor; range: any }) => void;
 }
 
-export const suggestionItems = createSuggestionsItems([
+export const slashCommands: SlashCommand[] = [
   {
     title: "Add/Replace content",
     searchTerms: ["ai", "llm", "ml", "auto"],
@@ -59,7 +58,6 @@ export const suggestionItems = createSuggestionsItems([
   },
   {
     title: "Text",
-
     searchTerms: ["p", "paragraph"],
     icon: Text,
     command: ({ editor, range }) => {
@@ -71,15 +69,6 @@ export const suggestionItems = createSuggestionsItems([
         .run();
     },
   },
-  // {
-  //   title: "To-do List",
-  //   tooltip: "Create a checklist with checkboxes",
-  //   searchTerms: ["todo", "task", "list", "check", "checkbox"],
-  //   icon: CheckSquare,
-  //   command: ({ }) => {
-  //     // editor.chain().focus().deleteRange(range).toggleTaskList().run();
-  //   },
-  // },
   {
     title: "Heading 1",
     searchTerms: ["h1", "header", "large"],
@@ -157,4 +146,4 @@ export const suggestionItems = createSuggestionsItems([
       editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
     },
   },
-]);
+];

@@ -8,18 +8,7 @@ import Link from "@tiptap/extension-link";
 
 import { DiffExtension, setCurrentEditor } from "@/extensions/diff";
 import Placeholder from "@tiptap/extension-placeholder";
-import {
-  SlashCmdProvider,
-  Slash,
-  enableKeyboardNavigation,
-} from "@harshtalks/slash-tiptap";
-import { suggestionItems } from "@/lib/slash-commands";
-import SlashCommand from "./slash-command";
-
-
 import { BubbleMenuComponent } from "./bubble-menu";
-// import TaskList from "@tiptap/extension-task-list";
-// import TaskItem from "@tiptap/extension-task-item";
 import UniqueID from "@tiptap/extension-unique-id";
 import { customAlphabet } from "nanoid";
 import { TextNode } from "@/extensions/text-node";
@@ -30,15 +19,18 @@ import { ChartNode } from "@/extensions/chart-node";
 import DOMPurify from "dompurify";
 import { SANITIZE_CONFIG } from "./safe-html";
 
-const Tiptap = ({  data }: { data: any }) => {
-  const [sent,setSent] = useState(false);
+import { SlashCommand } from "@/extensions/slash-command";
+import { useSlashCommand } from "@/hooks/use-slash-command";
+import { slashCommands } from "@/lib/slash-commands";
 
+const Tiptap = ({ data }: { data: any }) => {
   const nanoid = customAlphabet(
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
     7
   );
 
   const { setEditor } = useEditorContext();
+  const { renderSlashMenu } = useSlashCommand(slashCommands);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -65,7 +57,6 @@ const Tiptap = ({  data }: { data: any }) => {
           if (node.type.name === "heading") {
             return "Heading1";
           }
-
           return "Press '/' for commands...";
         },
       }),
@@ -73,7 +64,7 @@ const Tiptap = ({  data }: { data: any }) => {
       TextNode,
       ChartNode,
       DiffExtension,
-    
+
       UniqueID.configure({
         types: [
           "heading",
@@ -84,36 +75,44 @@ const Tiptap = ({  data }: { data: any }) => {
         ],
         generateID: () => nanoid(),
       }),
-      Slash.configure({
+      SlashCommand.configure({
         suggestion: {
-          items: () => suggestionItems,
+          items: ({ query }: { query: string }) => {
+            const lowerQuery = query.toLowerCase();
+            return slashCommands.filter((item) => {
+              const titleMatch = item.title.toLowerCase().includes(lowerQuery);
+              const termsMatch = item.searchTerms.some((term) =>
+                term.toLowerCase().includes(lowerQuery)
+              );
+              return titleMatch || termsMatch;
+            });
+          },
+          render: renderSlashMenu,
         },
       }),
     ],
     autofocus: true,
     editorProps: {
       handlePaste: (view, event, slice) => {
-        const html = event.clipboardData?.getData('text/html');
-        const text = event.clipboardData?.getData('text/plain');
-        
+        const html = event.clipboardData?.getData("text/html");
+        const text = event.clipboardData?.getData("text/plain");
+
         if (html) {
-         
           const safeHTML = DOMPurify.sanitize(html, SANITIZE_CONFIG);
           editor?.commands.insertContent(safeHTML, {
-            parseOptions: { preserveWhitespace: 'full' }
+            parseOptions: { preserveWhitespace: "full" },
           });
           return true;
         }
-        
-        if (text && text.includes('<')) {
-         
+
+        if (text && text.includes("<")) {
           const safeHTML = DOMPurify.sanitize(text, SANITIZE_CONFIG);
           editor?.commands.insertContent(safeHTML, {
-            parseOptions: { preserveWhitespace: 'full' }
+            parseOptions: { preserveWhitespace: "full" },
           });
           return true;
         }
-        
+
         return false;
       },
       attributes: {
@@ -122,12 +121,13 @@ const Tiptap = ({  data }: { data: any }) => {
       },
       handleDOMEvents: {
         keydown: (_, event) => {
-          if (event.key === 'Tab') {
+          if (event.key === "Tab") {
             event.preventDefault();
-            console.log("tab was clicked")
+            console.log("tab was clicked");
             return false;
           }
-          return enableKeyboardNavigation(event);
+
+          return false;
         },
       },
     },
@@ -136,8 +136,7 @@ const Tiptap = ({  data }: { data: any }) => {
       setEditor(editor);
       setCurrentEditor(editor);
     },
-    onUpdate: ({ editor }) => {
-    },
+    onUpdate: ({ editor }) => {},
     onSelectionUpdate: ({ editor, transaction }) => {
       if (editor.state.selection.empty && transaction.getMeta("pointer")) {
         editor
@@ -154,14 +153,12 @@ const Tiptap = ({  data }: { data: any }) => {
   useEffect(() => {
     if (editor && data !== undefined) {
       queueMicrotask(() => editor.commands.setContent(data, false));
-
     }
   }, [editor, data]);
 
-
   useEffect(() => {
     if (!editor) return;
-   
+
     const cleanup = setupLlmOrchestrator(editor);
     return cleanup;
   }, [editor]);
@@ -171,13 +168,10 @@ const Tiptap = ({  data }: { data: any }) => {
     <>
       <div className="flex-[2.5] shadow-sm bg-background/10 overflow-hidden">
         <div className="h-full overflow-hidden break-words">
-          <SlashCmdProvider>
-            <EditorContent
-              className="h-full overflow-y-auto w-full"
-              editor={editor}
-            />
-            <SlashCommand editor={editor} />
-          </SlashCmdProvider>
+          <EditorContent
+            className="h-full overflow-y-auto w-full"
+            editor={editor}
+          />
         </div>
       </div>
       <BubbleMenuComponent />
