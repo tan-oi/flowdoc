@@ -19,49 +19,75 @@ function secondsUntilNextUtcMidnight(): number {
   return Math.ceil((nextMidnightUtc.getTime() - now.getTime()) / 1000);
 }
 
-function todayLimitKey(userId: string) {
+function todayKey(userId: string) {
   const day = new Date().toISOString().split("T")[0];
-  return `daily:${userId}:${day}:limit`;
+  return `daily:${userId}:${day}`;
 }
 
-function todayCallsKey(userId: string) {
-  const day = new Date().toISOString().split("T")[0];
-  return `daily:${userId}:${day}:calls`;
-}
+async function ensureDaySetup(
+  userId: string
+): Promise<{ limit: number; used: number } | null> {
+  const key = todayKey(userId);
 
-async function ensureDaySetup(userId: string): Promise<number | null> {
-  const limitKey = todayLimitKey(userId);
-  const callsKey = todayCallsKey(userId);
+  const existing = await redis.hmget(key, "limit", "used");
+  console.log("Redis HMGET result:", existing);
 
-  let limit = await redis.get(limitKey);
+  let limitValue: string | null = null;
+  let usedValue: string | null = null;
 
-  if (limit === null) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { dailyAllowance: true },
-    });
-
-    if (!user) return null;
-
-    limit = user.dailyAllowance ?? 5;
-
-    const ttl = secondsUntilNextUtcMidnight();
-    await redis.set(limitKey, limit, { ex: ttl });
-    await redis.set(callsKey, 0, { ex: ttl });
+  if (Array.isArray(existing)) {
+    limitValue = existing[0];
+    usedValue = existing[1];
+  } else if (existing && typeof existing === "object") {
+    limitValue = (existing as any).limit;
+    usedValue = (existing as any).used;
   }
 
-  return Number(limit);
-}
-export async function checkDailyLimit(userId: string) {
-  const limit = await ensureDaySetup(userId);
+  if (limitValue !== null && limitValue !== undefined) {
+    const limit = parseInt(limitValue as string, 10);
+    const used = parseInt((usedValue as string) || "0", 10);
 
-  if (limit === null) {
+    console.log("Parsed from Redis - limit:", limit, "used:", used);
+
+    if (!isNaN(limit)) {
+      return { limit, used: isNaN(used) ? 0 : used };
+    }
+  }
+
+  console.log("Setting up new day for user:", userId);
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { dailyAllowance: true },
+  });
+
+  if (!user) {
+    console.log("User not found in database");
+    return null;
+  }
+
+  const limit = user.dailyAllowance ?? 5;
+  const ttl = secondsUntilNextUtcMidnight();
+
+  console.log("Setting Redis hash with limit:", limit, "ttl:", ttl);
+
+  await redis.hset(key, {
+    limit: limit.toString(),
+    used: "0",
+  });
+  await redis.expire(key, ttl);
+
+  return { limit, used: 0 };
+}
+
+export async function checkDailyLimit(userId: string) {
+  const data = await ensureDaySetup(userId);
+
+  if (!data) {
     return { ok: false, error: "User not found" };
   }
 
-  const callsKey = todayCallsKey(userId);
-  const current = await redis.get(callsKey);
-  const used = current ? Number(current) : 0;
+  const { limit, used } = data;
   const remaining = Math.max(limit - used, 0);
 
   if (used >= limit) {
@@ -78,15 +104,32 @@ export async function checkDailyLimit(userId: string) {
 }
 
 export async function incrementUsage(userId: string) {
-  const limit = await ensureDaySetup(userId);
+  const key = todayKey(userId);
 
-  if (limit === null) {
-    return { ok: false, error: "User not found" };
+  const pipeline = redis.pipeline();
+  pipeline.hmget(key, "limit", "used");
+  pipeline.hincrby(key, "used", 1);
+
+  const results = await pipeline.exec();
+  const existing = results[0] as [string | null, string | null] | null;
+  const newUsed = results[1] as number;
+
+  if (!existing || existing[0] === null) {
+    const data = await ensureDaySetup(userId);
+    if (!data) {
+      return { ok: false, error: "User not found" };
+    }
+
+    // Increment after setup
+    const actualUsed = await redis.hincrby(key, "used", 1);
+    const remaining = Math.max(data.limit - actualUsed, 0);
+
+    return { ok: true, used: actualUsed, limit: data.limit, remaining };
   }
 
-  const callsKey = todayCallsKey(userId);
-  const newUsed = await redis.incr(callsKey);
-  const remaining = Math.max(limit - newUsed, 0);
+  const limit = Number(existing[0]);
+  const used = Number(newUsed);
+  const remaining = Math.max(limit - used, 0);
 
-  return { ok: true, used: newUsed, limit, remaining };
+  return { ok: true, used, limit, remaining };
 }
