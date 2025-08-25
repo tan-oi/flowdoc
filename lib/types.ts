@@ -86,3 +86,30 @@ export interface Document {
     createdAt: any;
     type : "text" | "chart" | "reactive"
   }
+
+
+  export interface LlmRequest {
+  nodePos: number;
+  nodeId: string;
+  nodeType: string;
+  prompt: string;
+  dependentContent: string;
+  currentContentHash: string;
+  computedContent: string;
+  type: "text" | "bar" | "pie";
+  newDependencyScope: string[];
+}
+
+
+export interface ReactiveTextAttrs {
+  prompt: string;
+  sourceHash: string;
+  dependencyHash: string;
+  status: "idle" | "computing" | "error";
+  dependencyScope: string[];
+  computedContent: string;
+  errorMessage?: string;
+  type: "text" | "bar" | "pie";
+  retryCount?: number;
+  id: string;
+}

@@ -1,41 +1,31 @@
-
-
-
 import { sha256 } from "js-sha256";
 import DOMPurify from "dompurify";
 import { Editor } from "@tiptap/react";
 import { Node as ProseMirrorNode } from "prosemirror-model";
 
 import debounce from "lodash.debounce";
-
-interface LlmRequest {
-  nodePos: number;
-  nodeType: string;
-  prompt: string;
-  dependentContent: string;
-  currentContentHash: string;
-  computedContent: string;
-  type: "text" | "bar" | "pie";
-  newDependencyScope : string[]
-}
-
-interface ReactiveTextAttrs {
-  prompt: string;
-  sourceHash: string;
-  dependencyHash: string;
-  status: "idle" | "computing" | "error";
-  dependencyScope: string[];
-  computedContent: string;
-  errorMessage?: string;
-  type: "text" | "bar" | "pie";
-  retryCount?: number;
-
-}
+import { LlmRequest, ReactiveTextAttrs } from "../types";
 
 const llmRequestQueue: LlmRequest[] = [];
 let isProcessingQueue = false;
 
 let debouncedScanRef: ReturnType<typeof debounce> | null = null;
+
+const findReactiveNodeById = (
+  doc: ProseMirrorNode,
+  nodeId: string
+): { node: ProseMirrorNode; pos: number } | null => {
+  let result: { node: ProseMirrorNode; pos: number } | null = null;
+
+  doc.descendants((node: ProseMirrorNode, pos: number) => {
+    if (node.attrs?.isReactive && node.attrs?.id === nodeId) {
+      result = { node, pos };
+      return false;
+    }
+  });
+
+  return result;
+};
 
 const callLlmApi = async (
   prompt: string,
@@ -54,7 +44,7 @@ const callLlmApi = async (
         message: `Base content:\n\n${dependentContent}\n\n 
        Desired type : ${type} \n\n
         Task: ${prompt}`,
-        type
+        type,
       }),
     });
     const { htmlContent } = await res.json();
@@ -87,24 +77,34 @@ const processQueue = async (editor: Editor): Promise<void> => {
   const batchPromises = currentBatch.map(async (request) => {
     const {
       nodePos,
+      nodeId,
       nodeType,
       prompt,
       dependentContent,
       currentContentHash,
       computedContent,
       type,
-      newDependencyScope
+      newDependencyScope,
     } = request;
 
     try {
-      const currentNode = editor.state.doc.nodeAt(nodePos);
-      if (!currentNode || currentNode.type.name !== nodeType) {
+      const nodeData = findReactiveNodeById(editor.state.doc, nodeId);
+
+      if (!nodeData) {
         console.warn(
-          `[Orchestrator] Node at position ${nodePos} no longer exists or changed type. Skipping LLM call.`
+          `[Orchestrator] Node with ID ${nodeId} no longer exists. Skipping LLM call.`
         );
         return;
       }
 
+      const { node: currentNode, pos: actualPos } = nodeData;
+      // console.log(currentNode, "&&" , actualPos)
+      if (currentNode.type.name !== nodeType) {
+        console.warn(
+          `[Orchestrator] Node with ID ${nodeId} changed type from ${nodeType} to ${currentNode.type.name}. Skipping LLM call.`
+        );
+        return;
+      }
       const generatedHtml = await callLlmApi(
         prompt,
         dependentContent,
@@ -119,55 +119,71 @@ const processQueue = async (editor: Editor): Promise<void> => {
       });
 
       const newComputedHash = sha256(sanitizedHtml);
+      const nodalData = findReactiveNodeById(editor.state.doc, nodeId);
+      if (!nodalData) {
+        console.warn(
+          `[Orchestrator] Node with ID ${nodeId} no longer exists during update. Skipping.`
+        );
+        return;
+      }
 
+      const { node: currentNod, pos: actualPose } = nodalData;
       editor.view.dispatch(
-        editor.state.tr.setNodeMarkup(nodePos, undefined, {
+        editor.state.tr.setNodeMarkup(actualPose, currentNod.type, {
           ...currentNode.attrs,
           computedContent: sanitizedHtml,
           sourceHash: newComputedHash,
           dependencyHash: currentContentHash,
-          dependencyScope : newDependencyScope,
-          status: "idle", 
+          dependencyScope: newDependencyScope,
+          status: "idle",
           errorMessage: "",
-          retryCount: 0, 
+          retryCount: 0,
         })
       );
 
       console.log(
-        `[Orchestrator] Node at pos ${nodePos} updated successfully with HTML.`
+        `[Orchestrator] Node with ID ${nodeId} updated successfully at position ${actualPos}.`
       );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred.";
       console.error(
-        `[Orchestrator] LLM call failed for node at pos ${nodePos}:`,
+        `[Orchestrator] LLM call failed for node with ID ${nodeId}:`,
         error
       );
 
-      const errorNode = editor.state.doc.nodeAt(nodePos);
-      if (editor.isDestroyed || !errorNode) {
+      const errorNodeData = findReactiveNodeById(editor.state.doc, nodeId);
+
+      if (editor.isDestroyed || !errorNodeData) {
         console.warn(
-          `[Orchestrator] Editor destroyed or node at position ${nodePos} no longer exists for error update.`
+          `[Orchestrator] Editor destroyed or node with ID ${nodeId} no longer exists for error update.`
         );
         return;
       }
 
-      const currentRetryCount = errorNode.attrs.retryCount || 0;
+      const currentRetryCount = errorNodeData.node.attrs.retryCount || 0;
       const newRetryCount = currentRetryCount + 1;
 
-      editor.view.dispatch(
-        editor.state.tr.setNodeMarkup(nodePos, undefined, {
-          ...errorNode.attrs,
-          status: "error",
-          errorMessage: errorMessage,
-          computedContent: `<p style="color: red;">Error: ${errorMessage} (Attempt ${newRetryCount}/2)</p>`,
-          retryCount: newRetryCount,
-        })
-      );
+      try {
+        editor.view.dispatch(
+          editor.state.tr.setNodeMarkup(errorNodeData.pos, undefined, {
+            ...errorNodeData.node.attrs,
+            status: "error",
+            errorMessage: errorMessage,
+            computedContent: `<p style="color: red;">Error: ${errorMessage} (Attempt ${newRetryCount}/2)</p>`,
+            retryCount: newRetryCount,
+          })
+        );
 
-      console.log(
-        `[Orchestrator] Node at pos ${nodePos} failed. Retry count: ${newRetryCount}/2`
-      );
+        console.log(
+          `[Orchestrator] Node with ID ${nodeId} failed. Retry count: ${newRetryCount}/2`
+        );
+      } catch (dispatchError) {
+        console.error(
+          `[Orchestrator] Failed to dispatch error update for node ${nodeId}:`,
+          dispatchError
+        );
+      }
     }
   });
 
@@ -209,12 +225,22 @@ const triggerReevaluationScan = (editor: Editor): void => {
         computedContent,
         type,
         retryCount = 0,
+        id: nodeId,
       } = attrs;
       console.log(dependencyHash, "in llmorc");
 
+      // Skip nodes without IDs
+      if (!nodeId) {
+        console.warn(
+          `[Orchestrator] Reactive node at pos ${pos} missing ID. Skipping.`
+        );
+        return;
+      }
+
       let dependentContent = "";
       let dependencyFound = true;
-      const newDependencyScope:string[] = [];
+      const newDependencyScope: string[] = [];
+
       if (dependencyScope[0] === "document") {
         newDependencyScope.push("document");
         doc.descendants((n: ProseMirrorNode, p: number) => {
@@ -235,7 +261,7 @@ const triggerReevaluationScan = (editor: Editor): void => {
             if (n.attrs && n.attrs.id === blockId) {
               if (typeof n.textContent === "string") {
                 console.log(n.attrs.id);
-                newDependencyScope.push(n.attrs.id)
+                newDependencyScope.push(n.attrs.id);
                 contents.push(n.textContent);
               }
               found = true;
@@ -261,27 +287,29 @@ const triggerReevaluationScan = (editor: Editor): void => {
 
       const currentContentHash = sha256(dependentContent);
       console.log(currentContentHash);
-      
-   
+
       const dependenciesChanged = currentContentHash !== dependencyHash;
-        
-     
       const effectiveRetryCount = dependenciesChanged ? 0 : retryCount;
-      
-      const shouldReevaluate = (
-        (dependenciesChanged && dependencyFound) ||
-        !dependencyFound
-      ) && status !== "computing" && 
+
+      // Check if already queued by node ID (not position)
+      const alreadyQueued = llmRequestQueue.some(
+        (req) => req.nodeId === nodeId
+      );
+
+      const shouldReevaluate =
+        ((dependenciesChanged && dependencyFound) || !dependencyFound) &&
+        status !== "computing" &&
         effectiveRetryCount < 2 &&
-        !llmRequestQueue.some((req) => req.nodePos === pos);
+        !alreadyQueued;
 
       if (shouldReevaluate) {
         console.log(
-          `[Orchestrator] Queueing node at pos ${pos} for re-evaluation. Dependency changed: ${dependenciesChanged}, Retry count: ${effectiveRetryCount}/2`
+          `[Orchestrator] Queueing node with ID ${nodeId} at pos ${pos} for re-evaluation. Dependency changed: ${dependenciesChanged}, Retry count: ${effectiveRetryCount}/2`
         );
 
         nodesToQueue.push({
-          nodePos: pos,
+          nodePos: pos, // Store original position for reference
+          nodeId, // Store the stable ID
           nodeType: node.type.name,
           prompt,
           dependentContent,
@@ -301,7 +329,7 @@ const triggerReevaluationScan = (editor: Editor): void => {
         );
       } else if (effectiveRetryCount >= 2 && status === "error") {
         console.log(
-          `[Orchestrator] Node at pos ${pos} has exceeded retry limit (${effectiveRetryCount}/2). Stopping retries.`
+          `[Orchestrator] Node with ID ${nodeId} at pos ${pos} has exceeded retry limit (${effectiveRetryCount}/2). Stopping retries.`
         );
       }
     }
@@ -366,26 +394,27 @@ export const setupLlmOrchestrator = (
   };
 };
 
-export const forceNodeReevaluation = (editor: Editor, pos: number): void => {
+export const forceNodeReevaluation = (editor: Editor, nodeId: string): void => {
   if (!editor || editor.isDestroyed) {
     console.warn(
       "[Orchestrator] Editor not available for manual re-evaluation."
     );
     return;
   }
-  const node = editor.state.doc.nodeAt(pos);
-  if (node && node.type.name === "ReactiveTextBlock") {
+
+  const nodeData = findReactiveNodeById(editor.state.doc, nodeId);
+  if (nodeData && nodeData.node.type.name === "TextBlock") {
     console.log(
-      `[Orchestrator] Manual re-evaluation triggered for node at pos ${pos}.`
+      `[Orchestrator] Manual re-evaluation triggered for node with ID ${nodeId} at pos ${nodeData.pos}.`
     );
 
     editor.view.dispatch(
-      editor.state.tr.setNodeMarkup(pos, undefined, {
-        ...node.attrs,
+      editor.state.tr.setNodeMarkup(nodeData.pos, undefined, {
+        ...nodeData.node.attrs,
         dependencyHash: "MANUAL_TRIGGER_" + Date.now(),
         status: "computing",
         errorMessage: "",
-        retryCount: 0, 
+        retryCount: 0,
       })
     );
 
