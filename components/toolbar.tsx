@@ -14,7 +14,6 @@ import { DisabledSave } from "./disabled-autosave";
 import { usePanelStore } from "@/store/panelStore";
 import { authClient } from "@/lib/auth-client";
 
-
 interface ToolbarProps {
   children?: React.ReactNode;
   id: string;
@@ -36,7 +35,7 @@ export function Toolbar({ children, id }: ToolbarProps) {
   //   userId : session?.user?.id,
   //   editor
   // })
-    
+
   useEffect(() => {
     if (editor && previousSaveRef.current === null) {
       const initialText = editor.getText();
@@ -83,8 +82,16 @@ export function Toolbar({ children, id }: ToolbarProps) {
 
       qc.setQueryData(
         ["editor-setup", `${variables.id}`, `${session?.user?.id}`],
-        (oldData) => {
+        (oldData: { editorState: any }) => {
           console.log(oldData);
+          return {
+            ...oldData,
+            document: {
+              ...oldData.editorState,
+              content: variables.editorState,
+              updatedAt: new Date().toISOString(),
+            },
+          };
         }
       );
       useHistoryState.getState().clearBatchedEntries(variables.id);
@@ -170,7 +177,6 @@ export function Toolbar({ children, id }: ToolbarProps) {
             </>
           )}
         </Button>
-
 
         <Button variant={"ghost"} size={"sm"} onClick={toggle}>
           <PanelRight />
