@@ -26,7 +26,6 @@ import { DocumentItem } from "./document-item";
 import { AboutDoc, Document } from "@/lib/types";
 
 export function LeftSideBar() {
-  
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("id");
@@ -147,9 +146,7 @@ export function LeftSideBar() {
     useInfiniteQuery({
       queryKey: ["documents", session?.user.id],
       queryFn: async ({ pageParam = 0 }) => {
-        const response = await fetch(
-          `/api/recent?offset=${pageParam}&limit=5`
-        );
+        const response = await fetch(`/api/recent?offset=${pageParam}&limit=5`);
         return response.json();
       },
       getNextPageParam: (lastPage, allPages) => {
@@ -175,13 +172,49 @@ export function LeftSideBar() {
     return <SidebarShimmer />;
   }
 
-  
   return (
     <Sidebar className="bg-sidebar">
       <SidebarContent className="">
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold font-italic font-mono">
-            FlowDocs
+            <div className="flex items-center gap-2">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <path
+                  d="M 8 12 Q 14 8 24 12 T 40 12"
+                  stroke="#fb923c"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+                <rect
+                  x="12"
+                  y="20"
+                  width="24"
+                  height="2.5"
+                  rx="1.25"
+                  fill="#f97316"
+                />
+                <rect
+                  x="12"
+                  y="26"
+                  width="18"
+                  height="2.5"
+                  rx="1.25"
+                  fill="#ea580c"
+                />
+                <rect
+                  x="12"
+                  y="32"
+                  width="20"
+                  height="2.5"
+                  rx="1.25"
+                  fill="#dc2626"
+                />
+              </svg>
+              <span className="text-xl font-bold tracking-tighter text-white">
+                Flowdocs
+              </span>
+            </div>
           </SidebarGroupLabel>
           <Separator className="my-2" />
         </SidebarGroup>
@@ -195,7 +228,7 @@ export function LeftSideBar() {
               Create new
             </Button>
           </SidebarGroupContent>
-      </SidebarGroup>
+        </SidebarGroup>
 
         <SidebarGroup>
           <SidebarGroupLabel>Recent Documents</SidebarGroupLabel>
@@ -237,7 +270,7 @@ export function LeftSideBar() {
         </SidebarGroup>
       </SidebarContent>
 
-    {/* <SidebarFooter className="">
+      {/* <SidebarFooter className="">
         
       <div className="px-2 py-4 rounded bg-card/80">
               <p className="text-gray-50 text-xs">
@@ -248,4 +281,3 @@ export function LeftSideBar() {
     </Sidebar>
   );
 }
-
