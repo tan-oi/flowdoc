@@ -1,12 +1,3 @@
-// "use client";
-
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-// import { useState } from "react";
-// import { GenerateChart } from "./generate-chart";
-// import { GenerateSummary } from "./generate-summary";
-// import { GenerateText } from "./generate-text";
-// import { AnimatePresence } from "motion/react";
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -56,17 +47,18 @@ export function SectionTwo() {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col gap-4 mb-8">
-        <h2 className="md:text-2xl font-bold tracking-wide text-lg text-white">
-          See what magic can be done with this
+      <div className="flex flex-col gap-4 mb-8 text-center md:text-left">
+        <h2 className="text-xl md:text-2xl font-bold tracking-wide text-white">
+          See what magic can be done
         </h2>
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
         transition={{ duration: 1.2, ease: "easeOut" }}
-        className="relative w-full max-w-5xl mx-auto h-[500px] sm:h-[600px] rounded-xl border border-white/10 bg-[#0C0C0C] shadow-2xl flex flex-col ring-1 ring-white/5 overflow-hidden"
+        className="relative w-full max-w-5xl mx-auto min-h-[450px] sm:h-[600px] rounded-xl border border-white/10 bg-[#0C0C0C] shadow-2xl flex flex-col ring-1 ring-white/5 overflow-hidden"
       >
         {/* Window Header */}
         <div className="h-12 border-b border-white/5 flex items-center px-4 justify-between bg-zinc-900/40 backdrop-blur-sm z-20">
@@ -75,8 +67,9 @@ export function SectionTwo() {
             <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/30" />
             <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/30" />
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex bg-zinc-900/50 rounded-lg p-1 border border-white/5">
+
+          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar max-w-[200px] sm:max-w-none">
+            <div className="flex bg-zinc-900/50 rounded-lg p-1 border border-white/5 whitespace-nowrap">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -88,11 +81,12 @@ export function SectionTwo() {
                   }`}
                 >
                   <tab.icon size={12} />
-                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span>{tab.label}</span>
                 </button>
               ))}
             </div>
           </div>
+
           <div className="hidden sm:flex gap-4 text-zinc-600">
             <Share2 size={14} />
             <MoreHorizontal size={14} />
@@ -100,7 +94,6 @@ export function SectionTwo() {
         </div>
 
         <div className="flex-1 flex relative">
-          {/* Sidebar */}
           <div className="hidden md:flex w-16 border-r border-white/5 flex-col items-center py-6 gap-6 bg-zinc-900/20">
             <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-zinc-100 border border-white/10 shadow-inner">
               <Terminal size={18} />
@@ -132,17 +125,17 @@ export function SectionTwo() {
                     transition={{ duration: 0.8 }}
                     className="w-full"
                   >
-                    <div className="mb-6 h-12 flex items-center">
-                      <h1 className="text-2xl sm:text-4xl font-semibold text-zinc-100 tracking-tight">
+                    <div className="mb-6 min-h-[3rem] flex items-center">
+                      <h1 className="text-xl sm:text-3xl md:text-4xl font-semibold text-zinc-100 tracking-tight">
                         Q3 Revenue Analysis
                       </h1>
                     </div>
-                    <div className="space-y-4 text-zinc-400 text-base sm:text-lg leading-relaxed relative">
+                    <div className="space-y-4 text-zinc-400 text-sm sm:text-base md:text-lg leading-relaxed relative">
                       <p>
                         {step >= 1 ? (
                           <>
                             Revenue grew by 24% month-over-month. <br />
-                            <span className="text-orange-400 font-medium">
+                            <span className="text-orange-400 font-medium block sm:inline mt-2 sm:mt-0">
                               /visualize monthly growth
                             </span>
                           </>
@@ -156,7 +149,8 @@ export function SectionTwo() {
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           transition={{ duration: 0.6 }}
-                          className="absolute top-16 left-0 z-30 flex items-center gap-2 p-1.5 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl"
+                         
+                          className="absolute top-20 sm:top-16 left-0 z-30 flex items-center gap-2 p-1.5 bg-[#1a1a1a] border border-white/10 rounded-lg shadow-xl"
                         >
                           <div className="px-2 py-1 text-xs font-medium text-zinc-400 flex items-center gap-2">
                             <Sparkles size={12} className="text-orange-400" />{" "}
@@ -174,7 +168,7 @@ export function SectionTwo() {
                             bounce: 0.2,
                             duration: 1.2,
                           }}
-                          className="mt-8 p-4 sm:p-6 rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900/80 to-black/50 backdrop-blur-md w-full relative overflow-hidden ring-1 ring-white/5"
+                          className="mt-8 sm:mt-8 p-4 sm:p-6 rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900/80 to-black/50 backdrop-blur-md w-full relative overflow-hidden ring-1 ring-white/5"
                         >
                           <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
@@ -188,7 +182,7 @@ export function SectionTwo() {
                               </div>
                             </div>
                           </div>
-                          <div className="h-40 flex items-end justify-between gap-2 px-1">
+                          <div className="h-32 sm:h-40 flex items-end justify-between gap-2 px-1">
                             {[40, 35, 55, 60, 75, 95].map((h, i) => (
                               <motion.div
                                 key={i}
@@ -220,8 +214,8 @@ export function SectionTwo() {
                     transition={{ duration: 0.8 }}
                     className="w-full"
                   >
-                    <div className="mb-6 h-12 flex items-center">
-                      <h1 className="text-2xl sm:text-4xl font-semibold text-zinc-100 tracking-tight">
+                    <div className="mb-6 min-h-[3rem] flex items-center">
+                      <h1 className="text-xl sm:text-3xl md:text-4xl font-semibold text-zinc-100 tracking-tight">
                         Project Titan Specs
                       </h1>
                     </div>
@@ -236,7 +230,7 @@ export function SectionTwo() {
                         aliquip ex ea commodo consequat. Duis aute irure dolor
                         in reprehenderit in voluptate velit.
                       </p>
-                      <p>
+                      <p className="hidden sm:block">
                         Excepteur sint occaecat cupidatat non proident, sunt in
                         culpa qui officia deserunt mollit anim id est laborum.
                       </p>
@@ -247,7 +241,7 @@ export function SectionTwo() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.8 }}
-                        className="absolute inset-0 flex items-center justify-center p-4"
+                        className="absolute inset-0 flex items-center justify-center p-4 z-20"
                       >
                         <div className="w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden">
                           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
@@ -282,7 +276,7 @@ export function SectionTwo() {
                   </motion.div>
                 )}
 
-                {/* Tab 3: Tone Refine */}
+               
                 {activeTab === 2 && (
                   <motion.div
                     key="refine"
@@ -292,12 +286,12 @@ export function SectionTwo() {
                     transition={{ duration: 0.8 }}
                     className="w-full"
                   >
-                    <div className="mb-6 h-12 flex items-center">
-                      <h1 className="text-2xl sm:text-4xl font-semibold text-zinc-100 tracking-tight">
+                    <div className="mb-6 min-h-[3rem] flex items-center">
+                      <h1 className="text-xl sm:text-3xl md:text-4xl font-semibold text-zinc-100 tracking-tight">
                         Email Draft
                       </h1>
                     </div>
-                    <div className="text-base sm:text-lg leading-relaxed relative">
+                    <div className="text-sm sm:text-base md:text-lg leading-relaxed relative">
                       {step < 2 ? (
                         <p className="text-zinc-400">
                           Hey team, <br />

@@ -3,17 +3,14 @@ import { Features } from "@/components/features";
 import { SectionTwo } from "@/components/landing-section-two";
 
 import * as motion from "motion/react-client";
-import { Play } from "lucide-react";
+import { Menu, Play, X } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
 export default function Home() {
-  const texts = [
-    "write with intelligence",
-    "make docs that react",
-    "stop wrestling tools",
-    "write in a flash",
-  ];
   return (
     <>
-      <section className="relative min-h-screen bg-black overflow-hidden">
+      <section className="relative min-h-screen bg-black overflow-hidden flex flex-col">
         <div
           className="absolute inset-0 z-0"
           style={{
@@ -38,18 +35,23 @@ export default function Home() {
         />
 
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-orange-600/10 rounded-full blur-[120px] opacity-40 animate-pulse" />
-          <div className="absolute bottom-[20%] right-[-5%] w-[600px] h-[600px] bg-orange-600/10 rounded-full blur-[120px] opacity-30" />
+          <div className="absolute top-[-10%] left-[-10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-orange-600/10 rounded-full blur-[80px] sm:blur-[120px] opacity-40 animate-pulse" />
+          <div className="absolute bottom-[20%] right-[-5%] w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-orange-600/10 rounded-full blur-[80px] sm:blur-[120px] opacity-30" />
         </div>
-
-        <nav className="relative z-10 max-w-6xl mx-auto px-6 pt-6 flex justify-between items-center">
+        <nav className="relative z-50 max-w-6xl w-full mx-auto px-6 pt-6 flex justify-between items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             className="flex items-center gap-2"
           >
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 48 48"
+              fill="none"
+              className="sm:w-12 sm:h-12"
+            >
               <path
                 d="M 8 12 Q 14 8 24 12 T 40 12"
                 stroke="#fb923c"
@@ -82,34 +84,27 @@ export default function Home() {
                 fill="#dc2626"
               />
             </svg>
-            <span className="text-xl font-bold tracking-tighter text-white">
-              Flowdocs
+            <span className="text-lg sm:text-xl font-bold tracking-tighter text-white">
+              FlowDocs
             </span>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
+            className="hidden sm:block"
           >
             <Auth type="minimal" />
           </motion.div>
         </nav>
 
-        <div className="relative z-10 max-w-4xl mx-auto px-4 flex flex-col justify-center items-center min-h-screen">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-8"
-          ></motion.div>
-
-          <div className="relative">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 flex flex-col justify-center items-center flex-grow py-20 min-h-[80vh]">
+          <div className="relative text-center">
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
-              className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tight text-white max-w-5xl leading-[0.9] relative z-10 text-center"
+              className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight text-white leading-[0.95] sm:leading-[0.9]"
             >
               Think. Write. <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-300 to-orange-400">
@@ -122,7 +117,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-8 text-base md:text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed text-center"
+            className="mt-6 sm:mt-8 text-sm sm:text-base md:text-lg text-zinc-400 max-w-xl mx-auto leading-relaxed text-center px-4"
           >
             FlowDocs repairs the bridge between your intent and the page.
             Intelligence-native writing for the modern builder.
@@ -132,39 +127,46 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-8 flex flex-col sm:flex-row items-center gap-4"
+            className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
           >
-            <Auth type="main" />
-            <a
-              href="https://youtu.be/EyPwyjhCJvY?si=NLjzGacbKwyacW4s"
+            <div className="sm:w-auto">
+              <Auth type="main" />
+            </div>
+
+            <Link
+              href={"https://youtu.be/EyPwyjhCJvY?si=NLjzGacbKwyacW4s"}
               target="_blank"
               rel="noreferrer"
-              className="px-8 py-2 rounded border border-white/10 hover:bg-white/5 transition-colors text-zinc-300 flex items-center gap-2"
             >
-              <Play size={14} fill="currentColor" /> Watch Demo
-            </a>
+              <Button
+                variant={"ghost"}
+                className="w-full sm:w-auto px-8 py-2 sm:rounded border border-white/10 transition-colors text-zinc-300 flex items-center justify-center gap-2 text-sm sm:text-base"
+              >
+                <Play size={14} fill="currentColor" /> Watch Demo
+              </Button>
+            </Link>
           </motion.div>
         </div>
       </section>
 
-      <section className="bg-black min-h-screen border-y-[3px]">
-        <div className="max-w-5xl mx-auto backdrop-blur-md border-x-[3px] border-double">
-          <div className="max-w-4xl mx-auto px-4 py-20">
+      <section className="bg-black border-y-[1px] border-white/10">
+        <div className="max-w-6xl mx-auto sm:border-x-[1px] sm:border-white/10 sm:border-double">
+          <div className="px-4 py-12 sm:py-20">
             <SectionTwo />
           </div>
         </div>
       </section>
 
       <section className="bg-black min-h-screen">
-        <div className="max-w-5xl mx-auto border-x-[3px] h-full">
-          <div className="max-w-4xl mx-auto px-4 py-10">
+        <div className="max-w-6xl mx-auto sm:border-x-[1px] sm:border-white/10 h-full">
+          <div className="max-w-5xl mx-auto px-4 py-16 sm:py-24">
             <Features />
           </div>
         </div>
       </section>
 
-      <footer className="bg-black border-y-[3px]">
-        <div className="max-w-5xl mx-auto border-x-[3px] border-double">
+      <footer className="bg-black border-t border-white/10">
+        <div className="max-w-6xl mx-auto sm:border-x-[1px] sm:border-white/10 sm:border-double">
           <div className="max-w-4xl mx-auto items-center flex flex-col px-4 py-10 gap-1">
             <h1 className="text-primary text-2xl tracking-widest">FlowDocs</h1>
 
