@@ -38,7 +38,7 @@ export default function Home() {
           <div className="absolute top-[-10%] left-[-10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-orange-600/10 rounded-full blur-[80px] sm:blur-[120px] opacity-40 animate-pulse" />
           <div className="absolute bottom-[20%] right-[-5%] w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-orange-600/10 rounded-full blur-[80px] sm:blur-[120px] opacity-30" />
         </div>
-        <nav className="relative z-50 max-w-6xl w-full mx-auto px-6 pt-6 flex flex-col justify-between items-center">
+        <nav className="relative z-50 max-w-6xl w-full mx-auto px-6 pt-6 flex justify-between items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -88,23 +88,14 @@ export default function Home() {
               FlowDocs
             </span>
           </motion.div>
-          {/* 
+
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="hidden sm:block"
           >
             <Auth type="minimal" />
-          </motion.div> */}
-          <div className="w-full bg-amber-50 border-l-4 border-amber-500 px-6 py-3 text-center shadow-sm">
-            <p className="text-amber-800 font-medium text-sm">
-              Temporarily paused due to llm credit limits. Working on a better, 
-              solution. {" "}
-              <Link href={"https://www.youtube.com/watch?v=EyPwyjhCJvY"} className="underline">
-                Watch demo
-              </Link>
-            </p>
-          </div>
+          </motion.div>
         </nav>
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 flex flex-col justify-center items-center flex-grow py-20 min-h-[80vh]">
@@ -138,9 +129,9 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
           >
-            {/* <div className="sm:w-auto">
+            <div className="sm:w-auto">
               <Auth type="main" />
-            </div> */}
+            </div>
 
             <Link
               href={"https://www.youtube.com/watch?v=EyPwyjhCJvY"}

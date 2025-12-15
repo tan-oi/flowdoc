@@ -18,6 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FlowDocs",
   description: "Documents, reimagined",
+  metadataBase: new URL("https://flowdocs.tanaybuild.dev"),
 
   icons: {
     icon: "/favicon.svg",
