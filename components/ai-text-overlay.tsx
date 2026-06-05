@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { Button } from "./ui/button";
 import { useOverlayInputStore } from "@/store/useEditorAIStore";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Sparkles, Zap, CornerDownLeft } from "lucide-react";
 import { experimental_useObject as useObject } from "@ai-sdk/react";
 import { getState } from "@/lib/print";
 
@@ -192,6 +192,18 @@ export default function TextOverlayAi() {
   }
   const overlayWidth = Math.max(400, Math.min(editorRect.width, 900));
 
+  const isReactive = type === "reactive";
+  const Icon = isReactive ? Zap : Sparkles;
+
+  const surface =
+    "relative bg-[#161618]/95 backdrop-blur-xl rounded-[10px] " +
+    "ring-1 ring-white/[0.06] " +
+    "shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_8px_16px_-4px_rgba(0,0,0,0.4),0_24px_48px_-12px_rgba(0,0,0,0.6)]";
+
+  const topHighlight =
+    "before:content-[''] before:absolute before:inset-x-0 before:top-0 before:h-px " +
+    "before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent before:rounded-t-[10px]";
+
   return createPortal(
     isLoading ? (
       <div
@@ -204,10 +216,17 @@ export default function TextOverlayAi() {
           maxWidth: 900,
         }}
       >
-        <div className="flex items-center bg-secondary rounded-md px-4 py-3 text-sm w-full justify-center gap-2 shadow-lg border border-border">
-          <Loader2 className="size-5 animate-spin" />
-          <span className="text-foreground font-medium">
-            Cooking the block…
+        <div className={`${surface} ${topHighlight} flex items-center gap-2.5 px-3.5 py-2.5`}>
+          <div className="relative size-3.5">
+            <Loader2 className="size-3.5 animate-spin text-neutral-400" />
+          </div>
+          <span className="text-[13px] text-neutral-300 tracking-tight">
+            Generating
+          </span>
+          <span className="inline-flex gap-0.5 ml-0.5">
+            <span className="size-1 rounded-full bg-neutral-500 animate-[pulse_1.4s_ease-in-out_infinite]" />
+            <span className="size-1 rounded-full bg-neutral-500 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+            <span className="size-1 rounded-full bg-neutral-500 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
           </span>
         </div>
       </div>
@@ -223,38 +242,62 @@ export default function TextOverlayAi() {
           maxWidth: 900,
         }}
       >
-        <div className="bg-secondary rounded-md shadow-lg border border-border flex flex-col gap-1 w-full p-0">
-          <div className="flex items-center justify-between px-3 pt-3 pb-1">
-            <span className="text-neutral-300 font-medium text-sm">
-              {type === "static" ? (
-                " Insert/Replace content for you"
-              ) : (
-                <>
-                  Add a reactive block{" "}
-                  <p className="text-neutral-500 mt-[3px]">
-                    💡 Works with document context - asking for external info
-                    may give wrong results
-                  </p>
-                </>
-              )}
+        <div className={`${surface} ${topHighlight} flex flex-col w-full overflow-hidden`}>
+          <div className="flex items-center gap-2 px-3.5 pt-2.5 pb-2">
+            <span className="flex items-center justify-center size-[18px] rounded-md bg-white/[0.04] ring-1 ring-white/[0.06]">
+              <Icon size={11} className="text-neutral-300" />
+            </span>
+            <span className="text-[12px] text-neutral-200 font-medium tracking-tight">
+              {isReactive ? "Reactive block" : "Insert or replace"}
+            </span>
+            <span className="text-[11px] text-neutral-500 tracking-tight">
+              {isReactive ? "· uses document context" : "· with AI"}
             </span>
           </div>
 
-          <div className="flex flex-row items-end px-3 pb-3 gap-2">
-            <Textarea
-              ref={textareaRef}
-              placeholder="Type and ask AI"
-              className="min-h-10 max-h-30 w-full text-foreground bg-background border border-border focus:ring-0 focus:outline-none"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              style={{ margin: 0, width: "100%" }}
-            />
-            <Button className="ml-2 h-10 px-3" onClick={handleSubmit}>
-              <Send className="size-4" />
-            </Button>
+          <div className="px-3 pb-2.5">
+            <div className="relative">
+              <Textarea
+                ref={textareaRef}
+                placeholder={
+                  isReactive
+                    ? "Describe what should react…"
+                    : "Ask AI to write or replace…"
+                }
+                className="min-h-[40px] max-h-40 w-full text-[13px] text-neutral-100 bg-black/20 border border-white/[0.06] placeholder:text-neutral-600 focus-visible:ring-0 focus-visible:border-white/15 rounded-md resize-none pr-10 leading-relaxed"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                style={{ margin: 0, width: "100%" }}
+              />
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!input.trim()}
+                aria-label="Send"
+                className="absolute right-1.5 bottom-1.5 inline-flex items-center justify-center size-7 rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-neutral-300 hover:text-white ring-1 ring-white/[0.08] transition-colors disabled:opacity-40 disabled:hover:bg-white/[0.06] disabled:hover:text-neutral-300"
+              >
+                <CornerDownLeft size={12} />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between px-3.5 py-1.5 border-t border-white/[0.04] bg-white/[0.01]">
+            <div className="flex items-center gap-1.5 text-[10.5px] text-neutral-500 tracking-tight">
+              <kbd className="px-1 py-px rounded bg-white/[0.05] ring-1 ring-white/[0.06] text-neutral-400 font-mono text-[10px] leading-none">
+                ↵
+              </kbd>
+              <span>send</span>
+              <span className="text-neutral-700">·</span>
+              <kbd className="px-1 py-px rounded bg-white/[0.05] ring-1 ring-white/[0.06] text-neutral-400 font-mono text-[10px] leading-none">
+                esc
+              </kbd>
+              <span>cancel</span>
+            </div>
+            <span className="text-[10.5px] text-neutral-600 tracking-tight">
+              AI may be inaccurate
+            </span>
           </div>
         </div>
-        <div></div>
       </div>
     ),
     document.body

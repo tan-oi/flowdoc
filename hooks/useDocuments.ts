@@ -26,7 +26,7 @@ const handleError = async (res: Response) => {
   throw new Error(errorData.message || "Something went wrong, try again!");
 };
 
-export function createNewDocu() {
+export function useCreateNewDoc() {
   const qc = useQueryClient();
   const { data: session } = useSession();
 
@@ -54,15 +54,16 @@ export function createNewDocu() {
       };
 
       qc.setQueryData<DocumentsData>(queryKey, (prev) => {
-        if (!prev) {
+        if (!prev || !prev.pages?.length) {
           return {
             pages: [[optimisticDoc]],
-            pageParams: [0],
+            pageParams: prev?.pageParams ?? [0],
           };
         }
+        const [firstPage = [], ...restPages] = prev.pages;
         return {
           ...prev,
-          pages: [[optimisticDoc, ...prev.pages[0]], ...prev.pages.slice(1)],
+          pages: [[optimisticDoc, ...firstPage], ...restPages],
         };
       });
 
@@ -129,7 +130,7 @@ export function createNewDocu() {
   });
 }
 
-export function renameDoc() {
+export function useRenameDoc() {
   const qc = useQueryClient();
   const { data: session } = useSession();
 
@@ -224,10 +225,9 @@ export function renameDoc() {
   });
 }
 
-export function deleteDoc() {
+export function useDeleteDoc() {
   const qc = useQueryClient();
   const { data: session } = useSession();
-  const createDocMutation = createNewDocu();
 
   return useMutation({
     mutationFn: async ({
@@ -280,8 +280,6 @@ export function deleteDoc() {
           );
         } else {
           window.history.pushState(null, "", "/editor");
-
-          setTimeout(() => createDocMutation.mutate(), 0);
         }
       }
 
