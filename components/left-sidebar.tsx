@@ -20,7 +20,7 @@ import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
 
 import { SidebarShimmer } from "./sidebar-shimmer";
-import { createNewDocu, deleteDoc, renameDoc } from "@/hooks/useDocuments";
+import { useCreateNewDoc, useDeleteDoc, useRenameDoc } from "@/hooks/useDocuments";
 import { DocumentItem } from "./document-item";
 
 import { AboutDoc, Document } from "@/lib/types";
@@ -32,10 +32,10 @@ export function LeftSideBar() {
 
   const { data: session, isPending } = authClient.useSession();
 
-  const { mutate: createNewDocument } = createNewDocu();
+  const { mutate: createNewDocument } = useCreateNewDoc();
 
-  const { mutate: renameDocument } = renameDoc();
-  const { mutate: deleteDocument } = deleteDoc();
+  const { mutate: renameDocument } = useRenameDoc();
+  const { mutate: deleteDocument } = useDeleteDoc();
 
   const [aboutRenameDoc, setAboutRenameDoc] = useState<AboutDoc>({
     id: null,
