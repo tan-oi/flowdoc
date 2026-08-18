@@ -7,6 +7,10 @@ import {
 import { toast } from "sonner";
 
 import { AboutDoc, Document } from "@/lib/types";
+import {
+  createEditorSetup,
+  isDocumentStillSelected,
+} from "@/lib/functions/editorIdentity";
 
 type DocumentsData = InfiniteData<Document[], number>;
 
@@ -50,6 +54,7 @@ export function createNewDocu() {
       const optimisticDoc = {
         id: tempId,
         title: "Untitled",
+        content: null,
         updatedAt: new Date().toISOString(),
       };
 
@@ -68,10 +73,10 @@ export function createNewDocu() {
 
       window.history.pushState(null, "", `/editor?id=${tempId}`);
 
-      qc.setQueryData(["editor-setup", tempId, session?.user?.id], {
-        correctId: tempId,
-        document: optimisticDoc,
-      });
+      qc.setQueryData(
+        ["editor-setup", tempId, session?.user?.id],
+        createEditorSetup(tempId, optimisticDoc),
+      );
 
       toast.success("Document created!");
       return { previousData, optimisticDoc, tempId };
@@ -99,15 +104,28 @@ export function createNewDocu() {
       });
 
       qc.removeQueries({
-        queryKey: ["editor-setup", session?.user?.id, context.tempId],
+        queryKey: ["editor-setup", context.tempId, session?.user?.id],
         exact: true,
       });
-      qc.setQueryData(["editor-setup", realData.id, session?.user?.id], {
-        correctId: realData.id,
-        document: realData,
-      });
+      qc.setQueryData(
+        ["editor-setup", realData.id, session?.user?.id],
+        createEditorSetup(
+          realData.id,
+          {
+            ...realData,
+            content: realData.content ?? null,
+          },
+          context.tempId,
+        ),
+      );
 
-      window.history.replaceState(null, "", `/editor?id=${realData.id}`);
+      const selectedDocumentId = new URLSearchParams(
+        window.location.search,
+      ).get("id");
+
+      if (isDocumentStillSelected(selectedDocumentId, context.tempId)) {
+        window.history.replaceState(null, "", `/editor?id=${realData.id}`);
+      }
     },
 
     onError: (error, variables, context) => {
@@ -117,12 +135,21 @@ export function createNewDocu() {
 
       if (context?.tempId) {
         qc.removeQueries({
-          queryKey: ["editor-setup", session?.user?.id, context.tempId],
+          queryKey: ["editor-setup", context.tempId, session?.user?.id],
           exact: true,
         });
       }
 
-      window.history.pushState(null, "", "/editor");
+      const selectedDocumentId = new URLSearchParams(
+        window.location.search,
+      ).get("id");
+
+      if (
+        context?.tempId &&
+        isDocumentStillSelected(selectedDocumentId, context.tempId)
+      ) {
+        window.history.pushState(null, "", "/editor");
+      }
 
       toast.error(error.message || "Failed to create document");
     },
@@ -286,7 +313,7 @@ export function deleteDoc() {
       }
 
       qc.removeQueries({
-        queryKey: ["editor-setup", session?.user?.id, docId],
+        queryKey: ["editor-setup", docId, session?.user?.id],
         exact: true,
       });
       qc.removeQueries({ queryKey: ["doc", "history", docId] });
