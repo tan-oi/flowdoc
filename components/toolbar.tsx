@@ -13,6 +13,7 @@ import { JSONContent } from "@tiptap/react";
 import { DisabledSave } from "./disabled-autosave";
 import { usePanelStore } from "@/store/panelStore";
 import { authClient } from "@/lib/auth-client";
+import { isTemporaryDocumentId } from "@/lib/functions/editorIdentity";
 
 interface ToolbarProps {
   children?: React.ReactNode;
@@ -20,6 +21,7 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ children, id }: ToolbarProps) {
+  const isCreating = isTemporaryDocumentId(id);
   console.log(id);
   const previousSaveRef = useRef<string | null>(null);
   const { editor } = useEditorContext();
@@ -163,9 +165,14 @@ export function Toolbar({ children, id }: ToolbarProps) {
           size={"sm"}
           className="cursor-pointer"
           onClick={saveDocs}
-          disabled={isSaving}
+          disabled={isSaving || isCreating}
         >
-          {isSaving ? (
+          {isCreating ? (
+            <>
+              <Loader2 className="animate-spin mr-2" />
+              Creating…
+            </>
+          ) : isSaving ? (
             <>
               <Loader2 className="animate-spin mr-2" />
               Saving..
