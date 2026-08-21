@@ -9,6 +9,7 @@ import { DocumentPanel } from "./document-panel";
 import { Toolbar } from "./toolbar";
 import { SidebarTrigger } from "./ui/sidebar";
 import { EditorShimmer } from "./main-shimmer";
+import { getEditorInstanceKey } from "@/lib/functions/editorIdentity";
 
 function EditorContent({ userId }: { userId: string }) {
   const searchParams = useSearchParams();
@@ -30,15 +31,15 @@ function EditorContent({ userId }: { userId: string }) {
           userId,
         }),
       });
-      if(!response.ok) {
+      if (!response.ok) {
         const error = await response.json();
         console.log(error);
-        if(response.status === 404) throw new Error("Document not found")
+        if (response.status === 404) throw new Error("Document not found");
       }
       return response.json();
     },
     staleTime: Infinity,
-    retry : false
+    retry: false,
   });
 
   useEffect(() => {
@@ -47,7 +48,7 @@ function EditorContent({ userId }: { userId: string }) {
         if (data.isFirstDocument) {
           const documentsQueryKey = ["documents", userId];
           queryClient.setQueryData(documentsQueryKey, (prev: any) => {
-            console.log(data.document)
+            console.log(data.document);
             if (!prev || !prev.pages?.length) {
               return {
                 pages: [[{ ...data.document, title: "Untitled" }]],
@@ -72,13 +73,13 @@ function EditorContent({ userId }: { userId: string }) {
             return prev;
           });
         }
-   
+
         window.history.replaceState(null, "", `/editor?id=${data.correctId}`);
       } else {
         setIsReady(true);
       }
     }
-   }, [data, urlId, router, queryClient, userId]);
+  }, [data, urlId, router, queryClient, userId]);
 
   useEffect(() => {
     if (data && urlId === data.correctId && !isReady) {
@@ -86,8 +87,8 @@ function EditorContent({ userId }: { userId: string }) {
     }
   }, [data, urlId, isReady]);
 
-  if(error) {
-    console.log(error.message)
+  if (error) {
+    console.log(error.message);
     notFound();
   }
 
@@ -107,7 +108,7 @@ function EditorContent({ userId }: { userId: string }) {
   return (
     <div>
       <div className="h-screen flex flex-col overflow-hidden">
-        <EditorProvider>
+        <EditorProvider key={getEditorInstanceKey(data)}>
           <div>
             <Toolbar id={data.correctId}>
               <SidebarTrigger />

@@ -1,7 +1,7 @@
 import { memo, useCallback } from "react";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Input } from "./ui/input";
-import { Check, Edit, MoreHorizontal, Trash2, X } from "lucide-react";
+import { Check, Edit, Loader2, MoreHorizontal, Trash2, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { AboutDoc, Document } from "@/lib/types";
+import { isTemporaryDocumentId } from "@/lib/functions/editorIdentity";
 
 export const DocumentItem = memo(
   ({
@@ -47,6 +48,8 @@ export const DocumentItem = memo(
     onNavigate: (docId: string) => void;
     onRenameChange: (value: string) => void;
   }) => {
+    const isCreating = isTemporaryDocumentId(doc.id);
+
     const handleRenameKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
@@ -146,10 +149,21 @@ export const DocumentItem = memo(
               <DropdownMenu>
                 <DropdownMenuTrigger asChild className="cursor-pointer">
                   <button
-                    className="opacity-100 group-hover:opacity-100 p-1 hover:bg-accent rounded transition-opacity"
+                    className="opacity-100 group-hover:opacity-100 p-1 hover:bg-accent rounded transition-opacity disabled:cursor-wait disabled:opacity-60"
                     onClick={handleDropdownClick}
+                    disabled={isCreating}
+                    aria-label={
+                      isCreating
+                        ? "Document is still being created"
+                        : "Document actions"
+                    }
+                    title={isCreating ? "Creating document…" : undefined}
                   >
-                    <MoreHorizontal className="h-4 w-4" />
+                    {isCreating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <MoreHorizontal className="h-4 w-4" />
+                    )}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
