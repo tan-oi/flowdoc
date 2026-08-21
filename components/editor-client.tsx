@@ -49,10 +49,10 @@ function EditorContent({ userId }: { userId: string }) {
           const documentsQueryKey = ["documents", userId];
           queryClient.setQueryData(documentsQueryKey, (prev: any) => {
             console.log(data.document);
-            if (!prev) {
+            if (!prev || !prev.pages?.length) {
               return {
                 pages: [[{ ...data.document, title: "Untitled" }]],
-                pageParams: [0],
+                pageParams: prev?.pageParams ?? [0],
               };
             }
 
@@ -61,11 +61,12 @@ function EditorContent({ userId }: { userId: string }) {
             );
 
             if (!exists) {
+              const [firstPage = [], ...restPages] = prev.pages;
               return {
                 ...prev,
                 pages: [
-                  [{ ...data.document, title: "Untitled" }, ...prev.pages[0]],
-                  ...prev.pages.slice(1),
+                  [{ ...data.document, title: "Untitled" }, ...firstPage],
+                  ...restPages,
                 ],
               };
             }
